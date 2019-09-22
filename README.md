@@ -60,6 +60,7 @@ There are still considerable unknowns regarding the BSC format that unfortunatel
  - [ ] Improve the built-in hex-editor to be closer in function to that of a standard hex-editor
  - [ ] Implement a SMF player for quick previews of game related audio
  - [ ] Implement an undo/redo function
+ - [ ] Add support for window resizing/fullscreen
 
 ## Source
 This tool was written in C++ 17 along with Qt 5 and currently only targets Windows Vista and above; however, this tool can easily be ported to Linux with minimal changes, though to what end I am not sure since this is for a Windows game. The source includes an easy-to-use .pro file if you wish to build the application in Qt Creator and the available release was compiled in Qt Creator 4.10.0 using MSVC 2017 and a static compilation of Qt 5.12.3. Other than a C++ 17 capable compiler and Qt 5.12.x+ all files required to compile this software are included.
