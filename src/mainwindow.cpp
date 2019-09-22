@@ -733,8 +733,21 @@ void MainWindow::cacheSubRoutine(bool existing)
                     QStringList invalidBSCPaths;
                     QStringList invalidReasons;
 
+                    bool aborted = false;
+
+                    QProgressDialog conversionProgress(MSG_CACHE_SCAN_IN_PROGRESS, MSG_CACHE_SCAN_ABORT, 0, bscList.length(), this);
+                    conversionProgress.setWindowModality(Qt::WindowModal);
+
                     for(int i = 0; i < bscList.length(); i++)
                     {
+                        conversionProgress.setValue(i);
+
+                        if(conversionProgress.wasCanceled())
+                        {
+                            aborted = true;
+                            break;
+                        }
+
                         QString currentFileName = QFileInfo(bscList.value(i)).baseName();
 
                         if(!currentFileName.contains(' '))
@@ -765,56 +778,62 @@ void MainWindow::cacheSubRoutine(bool existing)
                             invalidReasons.append(MSG_CACHE_INV_FILES_CAT_SPACE);
                         }
                     }
+                    conversionProgress.setValue(bscList.length()); // Finish progress dialog
 
-                    cache.deinterpretData();
-                    Qx::IO::IOOpReport writeReport = Qx::IO::writeBytesAsFile(cacheFile, cache.rebuildRawFile(), true);
-
-                    QMessageBox cacheStatus;
-                    cacheStatus.setStandardButtons(QMessageBox::Ok);
-                    cacheStatus.setDefaultButton(QMessageBox::Ok);
-                    cacheStatus.setIcon(QMessageBox::Information);
-
-                    if(!writeReport.wasSuccessful())
+                    if(!aborted)
                     {
-                        execIOReport(writeReport);
+                        cache.deinterpretData();
+                        Qx::IO::IOOpReport writeReport = Qx::IO::writeBytesAsFile(cacheFile, cache.rebuildRawFile(), true);
 
-                        cacheStatus.setIcon(QMessageBox::Critical);
-                        cacheStatus.setText(MSG_CACHE_FAIL.arg(QDir::toNativeSeparators(cachePath)));
-                    }
-                    else if(existing)
-                    {
-                        if(cache.getInterpretedCacheListV().length() == originalLength)
-                            cacheStatus.setText(MSG_CACHE_UP_TO_DATE);
-                        else if(cache.getInterpretedCacheListV().length() == originalLength + bscList.length())
-                            cacheStatus.setText(MSG_CACHE_UPDATED_TXT);
-                        else if(cache.getInterpretedCacheListV().length() > originalLength && cache.getInterpretedCacheListV().length() < originalLength + bscList.length())
+                        QMessageBox cacheStatus;
+                        cacheStatus.setStandardButtons(QMessageBox::Ok);
+                        cacheStatus.setDefaultButton(QMessageBox::Ok);
+                        cacheStatus.setIcon(QMessageBox::Information);
+
+                        if(!writeReport.wasSuccessful())
                         {
-                            cacheStatus.setText(MSG_CACHE_UPDATED_TXT);
-                            cacheStatus.setInformativeText(MSG_CACHE_UPDATED_INFO_TXT);
+                            execIOReport(writeReport);
+
+                            cacheStatus.setIcon(QMessageBox::Critical);
+                            cacheStatus.setText(MSG_CACHE_FAIL.arg(QDir::toNativeSeparators(cachePath)));
+                        }
+                        else if(existing)
+                        {
+                            if(cache.getInterpretedCacheListV().length() == originalLength)
+                                cacheStatus.setText(MSG_CACHE_UP_TO_DATE);
+                            else if(cache.getInterpretedCacheListV().length() == originalLength + bscList.length())
+                                cacheStatus.setText(MSG_CACHE_UPDATED_TXT);
+                            else if(cache.getInterpretedCacheListV().length() > originalLength && cache.getInterpretedCacheListV().length() < originalLength + bscList.length())
+                            {
+                                cacheStatus.setText(MSG_CACHE_UPDATED_TXT);
+                                cacheStatus.setInformativeText(MSG_CACHE_UPDATED_INFO_TXT);
+                            }
+                            else
+                                throw std::out_of_range("Updated Speechmanager Cache entry count is unexpected!");
                         }
                         else
-                            throw std::out_of_range("Updated Speechmanager Cache entry count is unexpected!");
+                            cacheStatus.setText(MSG_CACHE_NEW_SUCCESS_TXT);
+
+                        if(invalidBSCPaths.count() > 0)
+                        {
+                            QString invalidReport = MSG_CACHE_INV_FILES_DETAILS;
+                            QString infoText = cacheStatus.informativeText();
+
+                            for(int i = 0; i < invalidBSCPaths.count(); i++)
+                                invalidReport += "\n- " + invalidBSCPaths.value(i) + " " + invalidReasons.value(i);
+
+                            cacheStatus.setIcon(QMessageBox::Warning);
+                            if(infoText != "")
+                                infoText += " ";
+                            cacheStatus.setInformativeText(infoText + MSG_CACHE_INV_FILES_INFO);
+                            cacheStatus.setDetailedText(invalidReport);
+                        }
+
+                        QApplication::beep();
+                        cacheStatus.exec();
                     }
                     else
-                        cacheStatus.setText(MSG_CACHE_NEW_SUCCESS_TXT);
-
-                    if(invalidBSCPaths.count() > 0)
-                    {
-                        QString invalidReport = MSG_CACHE_INV_FILES_DETAILS;
-                        QString infoText = cacheStatus.informativeText();
-
-                        for(int i = 0; i < invalidBSCPaths.count(); i++)
-                            invalidReport += "\n- " + invalidBSCPaths.value(i) + " " + invalidReasons.value(i);
-
-                        cacheStatus.setIcon(QMessageBox::Warning);
-                        if(infoText != "")
-                            infoText += " ";
-                        cacheStatus.setInformativeText(infoText + MSG_CACHE_INV_FILES_INFO);
-                        cacheStatus.setDetailedText(invalidReport);
-                    }
-
-                    QApplication::beep();
-                    cacheStatus.exec();
+                        QMessageBox::critical(this, QApplication::applicationName(), MSG_CACHE_SCAN_ABORTED, QMessageBox::Ok, QMessageBox::Ok);
                 }
                 else
                     execIOReport(folderScanReport);

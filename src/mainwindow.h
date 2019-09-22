@@ -55,6 +55,10 @@ private:
     static inline const QString MENU_CACHE_NEW_TITLE = "Enter Speechmanager Cache Destina;tion";
     static inline const QString MSG_CACHE_NEW_SUCCESS_TXT = "The Speechmanager Cache was created successfully.";
 
+    static inline const QString MSG_CACHE_SCAN_IN_PROGRESS = "Scanning BSC files...";
+    static inline const QString MSG_CACHE_SCAN_ABORT = "Abort";
+    static inline const QString MSG_CACHE_SCAN_ABORTED = "Speechmanager cache update aborted by user.";
+
     static inline const QString MENU_SMF_FILE_FILTER = "SMF Audio (*." + SMF::FILE_EXT + ")";
     static inline const QString MENU_WAV_FILE_FILTER = "WAVE Audio (*." + WAV::FILE_EXT + ")";
 
