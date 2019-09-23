@@ -73,60 +73,76 @@ Developing this tool would not have been possible without the work of the user *
 Source: [http://web.archive.org/web/20140916062828/http://forums.relicnews.com/showthread.php?254902-HOW-TO-Setting-up-Custom-Sounds](http://web.archive.org/web/20140916062828/http://forums.relicnews.com/showthread.php?254902-HOW-TO-Setting-up-Custom-Sounds)
 
     EA Shark b ?
-	0x04 - ascii string - easb
-	0x05 - ?? - 0x0000000000
-	used when there's more than just one PlayList in the file
+    0x04 - ascii string - easb
+    0x05 - ?? - 0x0000000000
+    used when there's more than just one PlayList in the file
 
-	BSC Format (Burnt Sound Container):
-	Header:
-	0x04 - ascii string -'sbhs'
-	0x04 - uint32 - Version, CoH version = 14 (0x0E)
-	0x01 - uint8 - PlayList count
+    BSC Format (Burnt Sound Container):
+    Header:
+    0x04 - ascii string -'sbhs'
+    0x04 - uint32 - Version, CoH version = 14 (0x0E)
+    0x01 - uint8 - PlayList count
 
-	PlayList:
-	0x04 - uint32 - index (only for Sub-PlayLists)
-	0x04 - uint32 - length of ModeName
-	0x^^ - ascii string - ModeName (either Normal, Random, RandomPlaylist or Sequential)
-	0x04 - uint32 - max. Instances (0 = infinite, 1-10)
-	0x04 - uint32 - Polyphony (min 1, max 10)
-	0x04 - uint32 - min. RepeatTime in ms (0 = infinite)
-	0x04 - uint32 - max. RepeatTime in ms (0 = infinite)
-	0x04 - uint32 - min. RepeatCount (0 = infinite)
-	0x04 - uint32 - max. RepeatCount (0 = infinite)
-	0x04 - uint32 - RandomWeight(min 1, max 100), weight in Random Playlist
-	0x04 - float - Length in ms (0 = normal)
-	0x04 - float - ReleaseTime in seconds (0 = no ReleaseTime)
-	0x04 - uint32 - number of EffectBehaviors
-	**^^
-		0x04 - uint32 - length of EffectBehavior name
-		0x^^ - ascii string - Name of EffectBehavior (see files from EffectBehaviors-directory)
-	//**
-	0x01 - bool - OverrideParentBehaivors
-	0x04 - uint32 - length of emitter name
-	0x^^ - ascii string - Emitter name (see emitters.ems for possible values, <none> is also a possible value)
-	0x04 - uint32 - number of SoundContainers contained in the playlist
-	**^^
-		SoundContainers
-	//**
-	0x04 - uint32 - number of Sub-PlayLists
-	**^^
-		Sub-PlayLists
-	//**
+    PlayList:
+    0x04 - uint32 - index (only for Sub-PlayLists)
+    0x04 - uint32 - length of ModeName
+    0x^^ - ascii string - ModeName (either Normal, Random, RandomPlaylist or Sequential)
+    0x04 - uint32 - max. Instances (0 = infinite, 1-10)
+    0x04 - uint32 - Polyphony (min 1, max 10)
+    0x04 - uint32 - min. RepeatTime in ms (0 = infinite)
+    0x04 - uint32 - max. RepeatTime in ms (0 = infinite)
+    0x04 - uint32 - min. RepeatCount (0 = infinite)
+    0x04 - uint32 - max. RepeatCount (0 = infinite)
+    0x04 - uint32 - RandomWeight(min 1, max 100), weight in Random Playlist
+    0x04 - float - Length in ms (0 = normal)
+    0x04 - float - ReleaseTime in seconds (0 = no ReleaseTime)
+    0x04 - uint32 - number of EffectBehaviors
+    **^^
+	    0x04 - uint32 - length of EffectBehavior name
+	    0x^^ - ascii string - Name of EffectBehavior (see files from EffectBehaviors-directory)
+    //**
+    0x01 - bool - OverrideParentBehaivors
+    0x04 - uint32 - length of emitter name
+    0x^^ - ascii string - Emitter name (see emitters.ems for possible values, <none> is also a possible value)
+    0x04 - uint32 - number of SoundContainers contained in the playlist
+    **^^
+	    SoundContainers
+    //**
+    0x04 - uint32 - number of Sub-PlayLists
+    **^^
+	    Sub-PlayLists
+    //**
 
-	SoundContainer:
-	0x04 - uint32 - PlayList-Index of this Container
-	0x04 - uint32 - length of VoiceGroupName
-	0x^^ - ascii string - VoiceGroupName
-	0x01 - bool - Is3D
-	0x01 - bool - Looping
-	0x01 - bool - UseSoundSpeed/Volume Trigger
-	0x04 - uint32 - RandomWeight (min 1, max 100), weight in Random Playlist
-	0x04 - float - Amplitude factor
-	0x04 - float - Doppler ?
-	0x04 - float - PlayingFrequence
-	0x04 - float - Start ?
-	0x04 - float - End ?
-	0x04 - float - MaskSample ?
-	0x01 - uint8 - number of linked files
-	0x04 - uint32 - length of linked file's name
-	0x^^ - asc
+    SoundContainer:
+    0x04 - uint32 - PlayList-Index of this Container
+    0x04 - uint32 - length of VoiceGroupName
+    0x^^ - ascii string - VoiceGroupName
+    0x01 - bool - Is3D
+    0x01 - bool - Looping
+    0x01 - bool - UseSoundSpeed/Volume Trigger
+    0x04 - uint32 - RandomWeight (min 1, max 100), weight in Random Playlist
+    0x04 - float - Amplitude factor
+    0x04 - float - Doppler ?
+    0x04 - float - PlayingFrequence
+    0x04 - float - Start ?
+    0x04 - float - End ?
+    0x04 - float - MaskSample ?
+    0x01 - uint8 - number of linked files
+    0x04 - uint32 - length of linked file's name
+    0x^^ - ascii string - linked file's name
+    0x04 - EffectContainer count
+    -- 010100000010 etc. <- THIS IS UNKNOWN!!
+    0x?? tables
+    0x?? Control Sources with parameters
+
+    ControlSource:
+    0x04 - uint32 - Control Source Name length
+    0x^^ - string - control Source Name
+    0x04 - uint32 - Number of param-tables
+    **^^
+	    0x04 - uint32 - Number of Parameters
+	    **^^
+		    0x04 - float - Parameter condition
+		    0x04 - float - Parameter modificator for value
+	    //**
+    //**
