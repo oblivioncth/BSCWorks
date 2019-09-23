@@ -1,7 +1,7 @@
 
 # BSCWorks
 
-BSCWorks is a somewhat feature rich editor for the Burnt Sound Container format, version 14, that Company of Heroes uses and also provides several tools for handling related files. This editor is about a decade too late to be relevant, but was made to more easily edit sound related aspects of the game in the unreleased quality-of-life mod I develop in my spare time for use with a small group of friends/family that still play the original. I am sharing it here in the hopes that it could be useful the remnants of CoH modders or research purposes, such as a starting point for examining other versions of this format from other Relic Games (i.e. CoH 2, Dawn of War, Warhammer 40k, etc.), or if someone ever decides to make a source port of the original game.
+BSCWorks is a somewhat feature rich editor for the Burnt Sound Container format, version 14, that Company of Heroes uses and also provides several tools for handling related files. This editor is about a decade too late to be relevant, but was made to more easily edit sound related aspects of the game in the unreleased quality-of-life mod I develop in my spare time for use with a small group of friends/family that still play the original. I am sharing it here in the hopes that it could be useful the remnants of CoH modders or research purposes, such as a starting point for examining other versions of this format from other Relic Games (i.e. CoH 2, Dawn of War, Warhammer 40k, etc.), or if someone ever decides to make a source port of the original game (if we are lucky enough to ever get the source, instead of just a really random licensed iPad port >>) .
 
 ## Features
 
@@ -60,6 +60,7 @@ There are still considerable unknowns regarding the BSC format that unfortunatel
  - [ ] Improve the built-in hex-editor to be closer in function to that of a standard hex-editor
  - [ ] Implement a SMF player for quick previews of game related audio
  - [ ] Implement an undo/redo function
+ - [ ] Add support for window resizing/fullscreen
 
 ## Source
 This tool was written in C++ 17 along with Qt 5 and currently only targets Windows Vista and above; however, this tool can easily be ported to Linux with minimal changes, though to what end I am not sure since this is for a Windows game. The source includes an easy-to-use .pro file if you wish to build the application in Qt Creator and the available release was compiled in Qt Creator 4.10.0 using MSVC 2017 and a static compilation of Qt 5.12.3. Other than a C++ 17 capable compiler and Qt 5.12.x+ all files required to compile this software are included.
@@ -67,65 +68,81 @@ This tool was written in C++ 17 along with Qt 5 and currently only targets Windo
 All functions/variables under the "Qx" (QExtended) namespace belong to a small, personal library I maintain to always have access frequently used functionality in my projects. A pre-compiled static version of this library is provided with the source for this tool. If anyone truly needs it, I can provide the source for this library as well.
 
 ## Thanks
-Developing this tool would not have been possible without the work of the user **Copernicus** from the now defunct Relicnews Forums (RIP) figured out most about the format that anybody knows. I simply dug a little bit deeper and then crafted this editor after deciphering his original notes and what else I had determined on my own. These notes are shown below
+Developing this tool would not have been possible without the work of the user **Copernicus** from the now defunct Relicnews Forums (RIP), who figured out most of the format. I simply dug a little bit deeper and then crafted this editor after deciphering his/her original notes and using what else I had determined on my own. His/her original notes are shown below
 
 Source: [http://web.archive.org/web/20140916062828/http://forums.relicnews.com/showthread.php?254902-HOW-TO-Setting-up-Custom-Sounds](http://web.archive.org/web/20140916062828/http://forums.relicnews.com/showthread.php?254902-HOW-TO-Setting-up-Custom-Sounds)
 
     EA Shark b ?
-	0x04 - ascii string - easb
-	0x05 - ?? - 0x0000000000
-	used when there's more than just one PlayList in the file
+    0x04 - ascii string - easb
+    0x05 - ?? - 0x0000000000
+    used when there's more than just one PlayList in the file
 
-	BSC Format (Burnt Sound Container):
-	Header:
-	0x04 - ascii string -'sbhs'
-	0x04 - uint32 - Version, CoH version = 14 (0x0E)
-	0x01 - uint8 - PlayList count
+    BSC Format (Burnt Sound Container):
+    Header:
+    0x04 - ascii string -'sbhs'
+    0x04 - uint32 - Version, CoH version = 14 (0x0E)
+    0x01 - uint8 - PlayList count
 
-	PlayList:
-	0x04 - uint32 - index (only for Sub-PlayLists)
-	0x04 - uint32 - length of ModeName
-	0x^^ - ascii string - ModeName (either Normal, Random, RandomPlaylist or Sequential)
-	0x04 - uint32 - max. Instances (0 = infinite, 1-10)
-	0x04 - uint32 - Polyphony (min 1, max 10)
-	0x04 - uint32 - min. RepeatTime in ms (0 = infinite)
-	0x04 - uint32 - max. RepeatTime in ms (0 = infinite)
-	0x04 - uint32 - min. RepeatCount (0 = infinite)
-	0x04 - uint32 - max. RepeatCount (0 = infinite)
-	0x04 - uint32 - RandomWeight(min 1, max 100), weight in Random Playlist
-	0x04 - float - Length in ms (0 = normal)
-	0x04 - float - ReleaseTime in seconds (0 = no ReleaseTime)
-	0x04 - uint32 - number of EffectBehaviors
-	**^^
-		0x04 - uint32 - length of EffectBehavior name
-		0x^^ - ascii string - Name of EffectBehavior (see files from EffectBehaviors-directory)
-	//**
-	0x01 - bool - OverrideParentBehaivors
-	0x04 - uint32 - length of emitter name
-	0x^^ - ascii string - Emitter name (see emitters.ems for possible values, <none> is also a possible value)
-	0x04 - uint32 - number of SoundContainers contained in the playlist
-	**^^
-		SoundContainers
-	//**
-	0x04 - uint32 - number of Sub-PlayLists
-	**^^
-		Sub-PlayLists
-	//**
+    PlayList:
+    0x04 - uint32 - index (only for Sub-PlayLists)
+    0x04 - uint32 - length of ModeName
+    0x^^ - ascii string - ModeName (either Normal, Random, RandomPlaylist or Sequential)
+    0x04 - uint32 - max. Instances (0 = infinite, 1-10)
+    0x04 - uint32 - Polyphony (min 1, max 10)
+    0x04 - uint32 - min. RepeatTime in ms (0 = infinite)
+    0x04 - uint32 - max. RepeatTime in ms (0 = infinite)
+    0x04 - uint32 - min. RepeatCount (0 = infinite)
+    0x04 - uint32 - max. RepeatCount (0 = infinite)
+    0x04 - uint32 - RandomWeight(min 1, max 100), weight in Random Playlist
+    0x04 - float - Length in ms (0 = normal)
+    0x04 - float - ReleaseTime in seconds (0 = no ReleaseTime)
+    0x04 - uint32 - number of EffectBehaviors
+    **^^
+	    0x04 - uint32 - length of EffectBehavior name
+	    0x^^ - ascii string - Name of EffectBehavior (see files from EffectBehaviors-directory)
+    //**
+    0x01 - bool - OverrideParentBehaivors
+    0x04 - uint32 - length of emitter name
+    0x^^ - ascii string - Emitter name (see emitters.ems for possible values, <none> is also a possible value)
+    0x04 - uint32 - number of SoundContainers contained in the playlist
+    **^^
+	    SoundContainers
+    //**
+    0x04 - uint32 - number of Sub-PlayLists
+    **^^
+	    Sub-PlayLists
+    //**
 
-	SoundContainer:
-	0x04 - uint32 - PlayList-Index of this Container
-	0x04 - uint32 - length of VoiceGroupName
-	0x^^ - ascii string - VoiceGroupName
-	0x01 - bool - Is3D
-	0x01 - bool - Looping
-	0x01 - bool - UseSoundSpeed/Volume Trigger
-	0x04 - uint32 - RandomWeight (min 1, max 100), weight in Random Playlist
-	0x04 - float - Amplitude factor
-	0x04 - float - Doppler ?
-	0x04 - float - PlayingFrequence
-	0x04 - float - Start ?
-	0x04 - float - End ?
-	0x04 - float - MaskSample ?
-	0x01 - uint8 - number of linked files
-	0x04 - uint32 - length of linked file's name
-	0x^^ - asc
+    SoundContainer:
+    0x04 - uint32 - PlayList-Index of this Container
+    0x04 - uint32 - length of VoiceGroupName
+    0x^^ - ascii string - VoiceGroupName
+    0x01 - bool - Is3D
+    0x01 - bool - Looping
+    0x01 - bool - UseSoundSpeed/Volume Trigger
+    0x04 - uint32 - RandomWeight (min 1, max 100), weight in Random Playlist
+    0x04 - float - Amplitude factor
+    0x04 - float - Doppler ?
+    0x04 - float - PlayingFrequence
+    0x04 - float - Start ?
+    0x04 - float - End ?
+    0x04 - float - MaskSample ?
+    0x01 - uint8 - number of linked files
+    0x04 - uint32 - length of linked file's name
+    0x^^ - ascii string - linked file's name
+    0x04 - EffectContainer count
+    -- 010100000010 etc. <- THIS IS UNKNOWN!!
+    0x?? tables
+    0x?? Control Sources with parameters
+
+    ControlSource:
+    0x04 - uint32 - Control Source Name length
+    0x^^ - string - control Source Name
+    0x04 - uint32 - Number of param-tables
+    **^^
+	    0x04 - uint32 - Number of Parameters
+	    **^^
+		    0x04 - float - Parameter condition
+		    0x04 - float - Parameter modificator for value
+	    //**
+    //**
