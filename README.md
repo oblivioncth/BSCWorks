@@ -68,7 +68,7 @@ This tool was written in C++ 17 along with Qt 5 and currently only targets Windo
 All functions/variables under the "Qx" (QExtended) namespace belong to a small, personal library I maintain to always have access frequently used functionality in my projects. A pre-compiled static version of this library is provided with the source for this tool. If anyone truly needs it, I can provide the source for this library as well.
 
 ## Thanks
-Developing this tool would not have been possible without the work of the user **Copernicus** from the now defunct Relicnews Forums (RIP) figured out most about the format that anybody knows. I simply dug a little bit deeper and then crafted this editor after deciphering his original notes and what else I had determined on my own. These notes are shown below
+Developing this tool would not have been possible without the work of the user **Copernicus** from the now defunct Relicnews Forums (RIP), who figured out most of the format. I simply dug a little bit deeper and then crafted this editor after deciphering his/her original notes and using what else I had determined on my own. His/her original notes are shown below
 
 Source: [http://web.archive.org/web/20140916062828/http://forums.relicnews.com/showthread.php?254902-HOW-TO-Setting-up-Custom-Sounds](http://web.archive.org/web/20140916062828/http://forums.relicnews.com/showthread.php?254902-HOW-TO-Setting-up-Custom-Sounds)
 
