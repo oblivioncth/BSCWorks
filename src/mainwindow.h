@@ -10,6 +10,7 @@
 #include <QTreeWidget>
 #include <QTableWidget>
 #include <QDir>
+#include <QLabel>
 #include "version.h"
 
 namespace Ui {
@@ -106,6 +107,9 @@ private:
     static inline const QString MSG_ABOUT_TXT = "BSCWorks " + QString::fromStdString(VER_PRODUCTVERSION_STR) + " @oblivioncth";
     static inline const QString MSG_ABOUT_INFO_TXT = "Distrubted under the GNU General Public License V3.0. See " + QString::fromStdString(VER_COMPANYDOMAIN_STR) + "/BSCWorks for more information.";
 
+    static inline const QString STATUS_BAR_NEW_FILE = "[NEW UNSAVED FILE]";
+    static const int STATUS_BAR_INDENT = 10;
+
 //-Instance Variables--------------------------------------------------------------------------------------------
 private:
     Ui::MainWindow *ui; 
@@ -131,6 +135,9 @@ private:
     // Slot flags
     bool mEffConRawInputGuaranteedValid = false;
 
+    // Status bar
+    QLabel* label_statusBarCurrentFile;
+
 //-Constructor---------------------------------------------------------------------------------------------------
 public:
     explicit MainWindow(QWidget *parent = nullptr);
@@ -155,6 +162,7 @@ private:
     void updateSoundContainerGroup();
     void updateVoiceGroupBack(int frontIndex);
     void updateLinkedFiles();
+    void updateStatusBar();
     void setChangesSavedState(bool changesSaved);
     bool saveChangesPrompt(bool exit);
     void openBSCFile(QFile& bscFile);

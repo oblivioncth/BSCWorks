@@ -66,6 +66,13 @@ void MainWindow::initializeForms()
     // Install event filter for QPlainTextEdito
     ui->plainTextEdit_effectContainerDataRaw->installEventFilter(this);
 
+    // Setup status bar
+    label_statusBarCurrentFile = new QLabel();
+    label_statusBarCurrentFile->setAlignment(Qt::AlignRight);
+    label_statusBarCurrentFile->setIndent(STATUS_BAR_INDENT); // Add buffer for cleaner look
+    ui->statusBar->addPermanentWidget(label_statusBarCurrentFile);
+    ui->statusBar->setStyleSheet("QStatusBar{border-top: 1px outset grey;}");// Make status bar distinct
+
     // Initially hide widgets
     updatePrimaryWidgetStates();
 }
@@ -575,6 +582,19 @@ void MainWindow::updateLinkedFiles()
         ui->tableWidget_linkedFiles->setRowCount(0);
 }
 
+void MainWindow::updateStatusBar()
+{
+    if(mFileOpen)
+    {
+        if(mCurrentFileName == "")
+            label_statusBarCurrentFile->setText(STATUS_BAR_NEW_FILE);
+        else
+            label_statusBarCurrentFile->setText(QDir::toNativeSeparators(mCurrentFileName));
+    }
+    else
+        label_statusBarCurrentFile->setText("");
+}
+
 void MainWindow::setChangesSavedState(bool changesSaved)
 {
     mAllChangesSaved = changesSaved;
@@ -631,6 +651,7 @@ void MainWindow::openBSCFile(QFile& bscFile)
                     ui->treeWidget_playlists->setCurrentItem(ui->treeWidget_playlists->topLevelItem(0));
 
                 setChangesSavedState(true);
+                updateStatusBar();
             }
             else
                 execIOReport(openReport);
@@ -966,12 +987,13 @@ void MainWindow::all_on_menuAction_triggered()
             Qx::IO::IOOpReport saveReport = Qx::IO::writeBytesAsFile(saveAsFile, mBSCPtr->rebuildRawFile(), true);
             if(saveReport.wasSuccessful())
             {
-                QApplication::beep();
-                QMessageBox::information(this, MENU_SAVE_AS_TITLE, MSG_SAVE_SUCCESS.arg(QDir::toNativeSeparators(saveAsPath)),
-                                         QMessageBox::Ok, QMessageBox::Ok);
                 mCurrentFileDir = QDir(saveAsPath).absolutePath();
                 mCurrentFileName = saveAsFile.fileName();
                 setChangesSavedState(true);
+                updateStatusBar();
+                QApplication::beep();
+                QMessageBox::information(this, MENU_SAVE_AS_TITLE, MSG_SAVE_SUCCESS.arg(QDir::toNativeSeparators(saveAsPath)),
+                                         QMessageBox::Ok, QMessageBox::Ok);
             }
             else
             {
@@ -992,10 +1014,11 @@ void MainWindow::all_on_menuAction_triggered()
             Qx::IO::IOOpReport saveReport = Qx::IO::writeBytesAsFile(saveFile, mBSCPtr->rebuildRawFile(), true);
             if(saveReport.wasSuccessful())
             {
+                setChangesSavedState(true);
+                updateStatusBar();
                 QApplication::beep();
                 QMessageBox::information(this, MENU_SAVE_TITLE, MSG_SAVE_SUCCESS.arg(QDir::toNativeSeparators(savePath)),
                                          QMessageBox::Ok, QMessageBox::Ok);
-                setChangesSavedState(true);
             }
             else
             {
@@ -1023,6 +1046,7 @@ void MainWindow::all_on_menuAction_triggered()
             updateSecondaryWidgetStates(mEnableGroupTopLevel + mEnableGroupPlaylistSel + mEnableGroupPlaylistSet + mEnableGroupEffectBeh + mEnableGroupSoundCon);
             updateEntirePlaylist();
             setChangesSavedState(false);
+            updateStatusBar();
         }
     }
     else if(senderAction == ui->actionOpen)
@@ -1057,6 +1081,7 @@ void MainWindow::all_on_menuAction_triggered()
             updateBSCTopLevel();
             updatePrimaryWidgetStates();
             mBSCPtr.reset(); // Deletes ptr contents
+            updateStatusBar();
         }
     }
     else if(senderAction == ui->actionExit)
@@ -1951,7 +1976,7 @@ void MainWindow::all_on_toolButton_clicked()
             if(ui->treeWidget_playlists->currentItem() == nullptr)
             {
                 mBSCPtr->getPlaylistsR().append(BSC::Playlist(false));
-                updatePlaylists();
+                updateBSCTopLevel();
                 ui->treeWidget_playlists->setCurrentItem(ui->treeWidget_playlists->topLevelItem(ui->treeWidget_playlists->topLevelItemCount() - 1));
 
             }
@@ -1959,7 +1984,7 @@ void MainWindow::all_on_toolButton_clicked()
             {
                 PlaylistItemMap selectedItemMap = PlaylistItemMap(ui->treeWidget_playlists->currentItem(), mBSCPtr.get());
                 selectedItemMap.getTargetPlaylistList()->insert(selectedItemMap.getTargetIndex() + 1, BSC::Playlist(!selectedItemMap.targetIsTopLevel()));
-                updatePlaylists();
+                updateBSCTopLevel();
                 ui->treeWidget_playlists->setCurrentItem(PlaylistItemMap::getItemRelativeToMap(ui->treeWidget_playlists, selectedItemMap, selectedItemMap.targetDepth(),
                                                                                                selectedItemMap.getTargetIndex() + 1));
             }
@@ -1973,7 +1998,7 @@ void MainWindow::all_on_toolButton_clicked()
 
             PlaylistItemMap selectedItemMap = PlaylistItemMap(ui->treeWidget_playlists->currentItem(), mBSCPtr.get());
             selectedItemMap.getTargetPlaylistList()->removeAt(selectedItemMap.getTargetIndex());
-            updatePlaylists();
+            updateBSCTopLevel();
 
             if(mBSCPtr->hasPlaylists())
             {
@@ -2000,7 +2025,7 @@ void MainWindow::all_on_toolButton_clicked()
 
             PlaylistItemMap selectedItemMap = PlaylistItemMap(ui->treeWidget_playlists->currentItem(), mBSCPtr.get());
             selectedItemMap.getTargetPlaylistList()->insert(selectedItemMap.getTargetIndex() + 1, *selectedItemMap.getTargetPlaylist()); // Dereferrence pointer so copy is made
-            updatePlaylists();
+            updateBSCTopLevel();
 
             ui->treeWidget_playlists->setCurrentItem(PlaylistItemMap::getItemRelativeToMap(ui->treeWidget_playlists, selectedItemMap, selectedItemMap.targetDepth(),
                                                                                            selectedItemMap.getTargetIndex() + 1));
@@ -2018,7 +2043,7 @@ void MainWindow::all_on_toolButton_clicked()
 
             selectedItemMap.getTargetParentPlaylistList()->insert(selectedItemMap.getTargetParentIndex() + 1, *selectedItemMap.getTargetPlaylist()); // Dereferrence pointer so copy is made
             selectedItemMap.getTargetPlaylistList()->removeAt(selectedItemMap.getTargetIndex()); // Delete original playlist
-            updatePlaylists();
+            updateBSCTopLevel();
 
             ui->treeWidget_playlists->setCurrentItem(PlaylistItemMap::getItemRelativeToMap(ui->treeWidget_playlists, selectedItemMap, selectedItemMap.targetDepth() - 1,
                                                                                            selectedItemMap.getTargetIndex() + 1));
@@ -2037,7 +2062,7 @@ void MainWindow::all_on_toolButton_clicked()
             // Simply using "[]" here returns a nullptr (must have to do with being a list of pointers) so "operator[]()" must be used instead
             selectedItemMap.getTargetPlaylistList()->operator[](selectedItemMap.getTargetIndex() - 1).getSubPlaylistsR().append((*selectedItemMap.getTargetPlaylist()));
             selectedItemMap.getTargetPlaylistList()->removeAt(selectedItemMap.getTargetIndex()); // Delete original playlist
-            updatePlaylists();
+            updateBSCTopLevel();
 
             // Item playlist went into
             QTreeWidgetItem* aboveItem = PlaylistItemMap::getItemRelativeToMap(ui->treeWidget_playlists, selectedItemMap, selectedItemMap.targetDepth(),
