@@ -1,7 +1,7 @@
 
 # BSCWorks
 
-BSCWorks is a somewhat feature rich editor for the Burnt Sound Container format, version 14, that Company of Heroes uses and also provides several tools for handling related files. This editor is about a decade too late to be relevant, but was made to more easily edit sound related aspects of the game in the unreleased quality-of-life mod I develop in my spare time for use with a small group of friends/family that still play the original. I am sharing it here in the hopes that it could be useful the remnants of CoH modders or research purposes, such as a starting point for examining other versions of this format from other Relic Games (i.e. CoH 2, Dawn of War, Warhammer 40k, etc.), or if someone ever decides to make a source port of the original game.
+BSCWorks is a somewhat feature rich editor for the Burnt Sound Container format, version 14, that Company of Heroes uses and also provides several tools for handling related files. This editor is about a decade too late to be relevant, but was made to more easily edit sound related aspects of the game in the unreleased quality-of-life mod I develop in my spare time for use with a small group of friends/family that still play the original. I am sharing it here in the hopes that it could be useful the remnants of CoH modders or research purposes, such as a starting point for examining other versions of this format from other Relic Games (i.e. CoH 2, Dawn of War, Warhammer 40k, etc.), or if someone ever decides to make a source port of the original game (if we are lucky enough to ever get the source, instead of just a really random licensed iPad port XD) .
 
 ## Features
 
