@@ -589,7 +589,7 @@ void MainWindow::updateStatusBar()
         if(mCurrentFileName == "")
             label_statusBarCurrentFile->setText(STATUS_BAR_NEW_FILE);
         else
-            label_statusBarCurrentFile->setText(QDir::toNativeSeparators(mCurrentFileName));
+            label_statusBarCurrentFile->setText(QDir::toNativeSeparators(mCurrentFilePath));
     }
     else
         label_statusBarCurrentFile->setText("");
@@ -641,8 +641,9 @@ void MainWindow::openBSCFile(QFile& bscFile)
 
             if(openReport.wasSuccessful())
             {
-                mCurrentFileName = bscFile.fileName();
-                mCurrentFileDir = QDir(bscFile.fileName()).absolutePath();
+                mCurrentFilePath = bscFile.fileName();
+                mCurrentFileName = QFileInfo(bscFile).fileName();
+                mCurrentFileDir = QFileInfo(bscFile).absolutePath();
                 mFileOpen = true;
                 mBSCPtr = std::make_unique<BSC>(fullFile);
                 updateBSCTopLevel();
@@ -978,8 +979,7 @@ void MainWindow::all_on_menuAction_triggered()
     // Menu "File"
     if(senderAction == ui->actionSave_As)
     {
-        QString saveAsPath = QFileDialog::getSaveFileName(this, tr(MENU_SAVE_AS_TITLE.toStdString().c_str()), mCurrentFileDir,
-                                                          tr(MENU_FILE_FILTER.toStdString().c_str()));
+        QString saveAsPath = QFileDialog::getSaveFileName(this, MENU_SAVE_AS_TITLE, mCurrentFilePath, MENU_FILE_FILTER);
 
         if(saveAsPath != "")
         {
@@ -987,8 +987,9 @@ void MainWindow::all_on_menuAction_triggered()
             Qx::IO::IOOpReport saveReport = Qx::IO::writeBytesAsFile(saveAsFile, mBSCPtr->rebuildRawFile(), true);
             if(saveReport.wasSuccessful())
             {
-                mCurrentFileDir = QDir(saveAsPath).absolutePath();
-                mCurrentFileName = saveAsFile.fileName();
+                mCurrentFilePath = saveAsFile.fileName();
+                mCurrentFileDir = QFileInfo(saveAsFile).absolutePath();
+                mCurrentFileName = QFileInfo(saveAsFile).fileName();
                 setChangesSavedState(true);
                 updateStatusBar();
                 QApplication::beep();
@@ -1009,7 +1010,7 @@ void MainWindow::all_on_menuAction_triggered()
             ui->actionSave_As->trigger();
         else
         {
-            QString savePath = mCurrentFileDir + mCurrentFileName;
+            QString savePath = mCurrentFilePath;
             QFile saveFile(savePath);
             Qx::IO::IOOpReport saveReport = Qx::IO::writeBytesAsFile(saveFile, mBSCPtr->rebuildRawFile(), true);
             if(saveReport.wasSuccessful())
@@ -1038,6 +1039,7 @@ void MainWindow::all_on_menuAction_triggered()
 
         if(makeNew)
         {
+            mCurrentFilePath = "";
             mCurrentFileName = "";
             mFileOpen = true;
             mBSCPtr = std::make_unique<BSC>();
@@ -1076,6 +1078,7 @@ void MainWindow::all_on_menuAction_triggered()
 
         if(closeFile)
         {
+            mCurrentFilePath = "";
             mCurrentFileName = "";
             mFileOpen = false;
             updateBSCTopLevel();

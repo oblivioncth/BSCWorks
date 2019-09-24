@@ -124,6 +124,7 @@ private:
     bool mGaveEffectContainerWarning = false;
     QString mCurrentFileDir = QDir::currentPath();
     QString mCurrentFileName = "";
+    QString mCurrentFilePath = QDir::currentPath();
 
     //UI Enable Groups
     QWidgetList mEnableGroupTopLevel;
