@@ -32,7 +32,7 @@ public:
 
 //-Class Functions------------------------------------------------------------------------------------------------------
 public:
-    static bool fileIsValidWAV(QFile& possibleWAV, Qx::IO::IOOpReport reportBuffer);
+    static bool fileIsValidWAV(QFile& possibleWAV, Qx::IO::IOOpReport& reportBuffer);
 
 private:
 

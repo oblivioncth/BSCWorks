@@ -13,18 +13,16 @@ WAV::WAV(QByteArray rawData)
 
 //-Class Functions------------------------------------------------------------------------------------------------
 //Public:
-bool WAV::fileIsValidWAV(QFile &possibleWAV, Qx::IO::IOOpReport reportBuffer)
+bool WAV::fileIsValidWAV(QFile &possibleWAV, Qx::IO::IOOpReport& reportBuffer)
 {
+    // Get header region
     QByteArray headers;
-    reportBuffer = Qx::IO::readBytesFromFile(headers, possibleWAV, 0x00, 0x1B);
+    reportBuffer = Qx::IO::readBytesFromFile(headers, possibleWAV, 0x00, 0x0F);
 
     if(!reportBuffer.wasSuccessful())
         return false;
     else
     {
-        // Get header region
-        QByteArray headers;
-        reportBuffer = Qx::IO::readBytesFromFile(headers, possibleWAV, 0x00, 0x0F);
         long long fullFileSize = QFileInfo(possibleWAV).size();
 
         QByteArray riffSigRegion = headers.left(L_RIFF_SIG);
