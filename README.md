@@ -31,7 +31,7 @@ Start Screen:
 ![BSCWorks start screen](https://i.imgur.com/lFpTqst.png)
 
 Editor with file open:
-![BSCWorks with file open](https://i.imgur.com/znBz0jk.png)
+![BSCWorks with file open](https://i.imgur.com/6YSuQZK.pngg)
 
 The major actions within the editor have tooltips that are triggered by hovering over their corresponding buttons if their function is not clear.
 
