@@ -390,7 +390,21 @@ public:
         return nullptr;
     }
 
+    template<typename T> static QList<T> subtractAB(QList<T> &listA, QList<T> &listB)
+    {
+        // Difference list to fill
+        QList<T> differenceList;
+
+        for(T entry : listA)
+        {
+            if(!listB.contains(entry))
+                differenceList << entry;
+        }
+        return differenceList;
+    }
+
     static QWidgetList objectListToWidgetList(QObjectList list);
+
 };
 
 class MMRB

@@ -8,6 +8,7 @@
 #include <QStatusBar>
 #include <QProgressDialog>
 #include <QMimeData>
+#include <math.h>
 
 //===============================================================================================================
 // MAIN WINDOW
@@ -2136,7 +2137,7 @@ void MainWindow::all_on_toolButton_clicked()
             getSelectedPlaylist()->removeInterpretedEffectBehavior(selectedIndex);
             updateEffectBehaviors();
             if(ui->tableWidget_effectBehaviors->rowCount() > 0)
-                ui->tableWidget_effectBehaviors->setCurrentCell(selectedIndex - 1, 0);
+                ui->tableWidget_effectBehaviors->setCurrentCell(std::max(0,selectedIndex - 1), 0);
         }
         else if(senderToolbutton == ui->toolButton_effectBehaviorsCopy)
         {
@@ -2195,7 +2196,7 @@ void MainWindow::all_on_toolButton_clicked()
             getSelectedPlaylist()->removeSoundContainer(selectedIndex);
             updateSoundContainers();
             if(ui->comboBox_soundContainer->count() > 0)
-                ui->comboBox_soundContainer->setCurrentIndex(selectedIndex - 1);
+                ui->comboBox_soundContainer->setCurrentIndex(std::max(0, selectedIndex - 1));
 
             updateSoundContainerGroup(); // Must call manually to ensure update since the above may have moved the selected index
                                          // to the desired index so using "setCurrentIndex()" on the same index won't trigger the corresponding slot
@@ -2267,7 +2268,7 @@ void MainWindow::all_on_toolButton_clicked()
             currentSoundContainer->removeInterpretedLinkedFile(selectedIndex);
             updateLinkedFiles();
             if(ui->tableWidget_linkedFiles->rowCount() > 0)
-                ui->tableWidget_linkedFiles->setCurrentCell(selectedIndex - 1, 0);
+                ui->tableWidget_linkedFiles->setCurrentCell(std::max(0,selectedIndex - 1), 0);
         }
         else if(senderToolbutton == ui->toolButton_linkedFilesCopy)
         {

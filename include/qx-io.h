@@ -44,12 +44,15 @@ public:
         static bool fileIsEmpty(QFile& file);
         static bool fileIsEmpty(QFile& file, IOOpReport& reportBuffer);
     // Text Based:
-        static IOOpReport findStringInFile(TextPos& returnBuffer, QFile& textFile, const QString& query, int hitsToSkip = 0);
+        static IOOpReport getLineCountOfFile(long long& returnBuffer, QFile& textFile);
+        static IOOpReport findStringInFile(TextPos& returnBuffer, QFile& textFile, const QString& query, int hitsToSkip = 0, Qt::CaseSensitivity caseSensitivity = Qt::CaseSensitive);
         static IOOpReport readTextFromFile(QString& returnBuffer, QFile& textFile, TextPos textPos, int characters = -1);
         static IOOpReport readTextRangeFromFile(QString& returnBuffer, QFile& textFile, TextPos startPos, TextPos endPos = TextPos(-1,-1));
+        static IOOpReport readTextFromFileByLine(QStringList& returnBuffer, QFile &textFile, int startLine = 0, int endLine = -1);
         static IOOpReport readAllTextFromFile(QString& returnBuffer, QFile& textFile);
-        static IOOpReport readAllTextFromFileByLine(QStringList& returnBuffer, QFile &textFile, int startLine, int endLine = -1);
         static IOOpReport writeStringAsFile(QFile &textFile, const QString& text, bool overwriteIfExist = false, bool createDirs = true);
+        static IOOpReport writeStringToEndOfFile(QFile &textFile, const QString& text, bool ensureNewLine = false, bool createIfDNE = false, bool createDirs = true); // Consider making function just writeStringToFile and use TextPos with bool for overwrite vs insert
+        static IOOpReport deleteTextRangeFromFile(QFile &textFile, TextPos startPos, TextPos endPos);
     // Directory Based:
         static IOOpReport getDirFileList(QStringList& returnBuffer, QDir directory, bool includeSubdirectories = false, QStringList extFilter = QStringList());
         static bool dirContainsFiles(QDir directory, bool includeSubdirectories = false);
