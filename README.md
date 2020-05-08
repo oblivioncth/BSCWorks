@@ -16,7 +16,7 @@ BSCWorks is a somewhat feature rich editor for the Burnt Sound Container format,
  - Mostly complete editing of Sound Containers including sound container order insertion/removal of new/existing Sound Containers
  - Basic editing of *uninterpreted* Effect Container data
  - Single and batch conversion of both SMF->WAV and WAV->SMF
- - Creation and updating of Speechmanager Caches that performs byte-level validity checking, avoids adding redundant entries and removes any existing ones from the cache
+ - Creation and updating of Speechmanager Caches that performs byte-level validity checking, avoids adding redundant entries and removes any existing duplicates from the cache
 
 ## Usage
 
@@ -65,7 +65,7 @@ There are still considerable unknowns regarding the BSC format that unfortunatel
 ## Source
 This tool was written in C++ 17 along with Qt 5 and currently only targets Windows Vista and above; however, this tool can easily be ported to Linux with minimal changes, though to what end I am not sure since this is for a Windows game. The source includes an easy-to-use .pro file if you wish to build the application in Qt Creator and the available release was compiled in Qt Creator 4.10.0 using MSVC 2017 and a static compilation of Qt 5.12.3. Other than a C++ 17 capable compiler and Qt 5.12.x+ all files required to compile this software are included.
 
-All functions/variables under the "Qx" (QExtended) namespace belong to a small, personal library I maintain to always have access frequently used functionality in my projects. A pre-compiled static version of this library is provided with the source for this tool. If anyone truly needs it, I can provide the source for this library as well.
+All functions/variables under the "Qx" (QExtended) namespace belong to a small, personal library I maintain to always have access to frequently used functionality in my projects. A pre-compiled static version of this library is provided with the source for this tool. If anyone truly needs it, I can provide the source for this library as well.
 
 ## Thanks
 Developing this tool would not have been possible without the work of the user **Copernicus** from the now defunct Relicnews Forums (RIP), who figured out most of the format. I simply dug a little bit deeper and then crafted this editor after deciphering his/her original notes and using what else I had determined on my own. His/her original notes are shown below
