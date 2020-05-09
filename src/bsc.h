@@ -22,7 +22,8 @@ public:
 
     static inline const QString TWEENER_DEFAULT = "00" + QString(TWEENER_BYTE_SEP) + "00" + QString(TWEENER_BYTE_SEP) + "00"
                                                 + QString(TWEENER_BYTE_SEP) + "00" + QString(TWEENER_BYTE_SEP) + "00";
-    static const uint32_t FORMAT_TAG_DEFAULT = 14;
+    static inline const QByteArray FORMAT_VER_TARGET_RAW = Qx::ByteArray::RAWFromStringHex("0e000000");
+    static const uint32_t FORMAT_VER_DEFAULT = 14;
     static const uint8_t PLAYLIST_COUNT_DEFAULT = 0;
 
     static const int L_FORMAT_TAG_1 = 0x04; // easb
@@ -59,7 +60,7 @@ public:
 
 //-Class Functions------------------------------------------------------------------------------------------------------
 public:
-    static bool fileIsValidBSC(QFile& possibleBSC, Qx::IO::IOOpReport& reportBuffer);
+    static bool fileIsValidBSC(QFile& possibleBSC, Qx::IO::IOOpReport& reportBuffer, bool& versionMismatch);
 
 private:
 

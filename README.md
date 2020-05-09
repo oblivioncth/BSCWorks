@@ -63,7 +63,7 @@ There are still considerable unknowns regarding the BSC format that unfortunatel
  - [ ] Add support for window resizing/fullscreen
 
 ## Source
-This tool was written in C++ 17 along with Qt 5 and currently only targets Windows Vista and above; however, this tool can easily be ported to Linux with minimal changes, though to what end I am not sure since this is for a Windows game. The source includes an easy-to-use .pro file if you wish to build the application in Qt Creator and the available release was compiled in Qt Creator 4.10.0 using MSVC 2017 and a static compilation of Qt 5.12.3. Other than a C++ 17 capable compiler and Qt 5.12.x+ all files required to compile this software are included.
+This tool was written in C++ 17 along with Qt 5 and currently only targets Windows Vista and above; however, this tool can easily be ported to Linux with minimal changes, though to what end I am not sure since this is for a Windows game. The source includes an easy-to-use .pro file if you wish to build the application in Qt Creator and the available latest release was compiled in Qt Creator 4.12.0 using MSVC 2019 and a static compilation of Qt 5.14.0. Other than a C++ 17 capable compiler and Qt 5.14.x+ all files required to compile this software are included, with the exception of a standard make file.
 
 All functions/variables under the "Qx" (QExtended) namespace belong to a small, personal library I maintain to always have access to frequently used functionality in my projects. A pre-compiled static version of this library is provided with the source for this tool. If anyone truly needs it, I can provide the source for this library as well.
 

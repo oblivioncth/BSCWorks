@@ -58,6 +58,16 @@ void MainWindow::initializeForms()
     ui->tableWidget_linkedFiles->setColumnCount(1);
     ui->tableWidget_linkedFiles->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
+    // Set double spinner precision limit
+    ui->doubleSpinBox_end->setDecimals(DOUBLE_SPINNER_DECIMAL_PRECISION);
+    ui->doubleSpinBox_start->setDecimals(DOUBLE_SPINNER_DECIMAL_PRECISION);
+    ui->doubleSpinBox_length->setDecimals(DOUBLE_SPINNER_DECIMAL_PRECISION);
+    ui->doubleSpinBox_maskSample->setDecimals(DOUBLE_SPINNER_DECIMAL_PRECISION);
+    ui->doubleSpinBox_releaseTime->setDecimals(DOUBLE_SPINNER_DECIMAL_PRECISION);
+    ui->doubleSpinBox_dopplerRatio->setDecimals(DOUBLE_SPINNER_DECIMAL_PRECISION);
+    ui->doubleSpinBox_amplitudeFactor->setDecimals(DOUBLE_SPINNER_DECIMAL_PRECISION);
+    ui->doubleSpinBox_playbackFrequence->setDecimals(DOUBLE_SPINNER_DECIMAL_PRECISION);
+
     // Disable window resizing
     this->setFixedSize(QSize(this->width(), this->height()));
     this->setMaximumSize(QSize(this->width(), this->height()));
@@ -299,7 +309,7 @@ void MainWindow::updatePrimaryWidgetStates()
 void MainWindow::updateSecondaryWidgetStates(QWidgetList widgetsToUpdate)
 {
     for(QWidget* currentWidget : widgetsToUpdate)
-        currentWidget->setEnabled(mWidgetEnableConditionMap.value(currentWidget)());
+        currentWidget->setEnabled(mFileOpen && mWidgetEnableConditionMap.value(currentWidget)()); // Disables input widgets if no file is open
 }
 
 void MainWindow::recursivePlaylistEnumerator(QTreeWidgetItem* parentTreeItem, BSC::Playlist &parentPlaylist, QString parentIndexMarker)
@@ -324,22 +334,32 @@ void MainWindow::recursivePlaylistEnumerator(QTreeWidgetItem* parentTreeItem, BS
     }
 }
 
-void MainWindow::updateBSCTopLevel()
+void MainWindow::updateUIBSCTopLevel()
 {
-    // Tweener
-    ui->lineEdit_tweener->setText(mBSCPtr->getInterpretedTweener());
+    if(mFileOpen)
+    {
+        // Tweener
+        ui->lineEdit_tweener->setText(mBSCPtr->getInterpretedTweener());
 
-    // Format Version
-    ui->lineEdit_formatVer->setText(QString::number(mBSCPtr->getInterpretedFormatVer()));
+        // Format Version
+        ui->lineEdit_formatVer->setText(QString::number(mBSCPtr->getInterpretedFormatVer()));
 
-    // Playlist Count
-    ui->lineEdit_playlistCount->setText(QString::number(mBSCPtr->getInterpretedPlayListCount()));
+        // Playlist Count
+        ui->lineEdit_playlistCount->setText(QString::number(mBSCPtr->getInterpretedPlayListCount()));
+    }
+    else
+    {
+        // Clear all
+        ui->lineEdit_tweener->clear();
+        ui->lineEdit_formatVer->clear();
+        ui->lineEdit_playlistCount->clear();
+    }
 
     // Playlist Select
-    updatePlaylists();
+    updateUIPlaylists();
 }
 
-void MainWindow::updatePlaylists()
+void MainWindow::updateUIPlaylists()
 {
     // Clear playlist tree
     mSlotsEnabled = false;
@@ -347,29 +367,31 @@ void MainWindow::updatePlaylists()
     mSlotsEnabled = true;
 
     // Populate playlist tree
-
-    for(int i = 0; i < mBSCPtr->getInterpretedPlayListCount(); i++)
+    if(mFileOpen)
     {
-        // Create root item
-        QTreeWidgetItem* rootTreeItem = new QTreeWidgetItem(ui->treeWidget_playlists);
+        for(int i = 0; i < mBSCPtr->getInterpretedPlayListCount(); i++)
+        {
+            // Create root item
+            QTreeWidgetItem* rootTreeItem = new QTreeWidgetItem(ui->treeWidget_playlists);
 
-        // Create Initial Index Marker
-        QString rootIndexMarker = QString::number(i);
+            // Create Initial Index Marker
+            QString rootIndexMarker = QString::number(i);
 
-        // Set root item details
-        rootTreeItem->setText(0, BSC::Playlist::ROOT_INDEX_LABEL.arg(rootIndexMarker));
+            // Set root item details
+            rootTreeItem->setText(0, BSC::Playlist::ROOT_INDEX_LABEL.arg(rootIndexMarker));
 
-        // Restore enable state
-        rootTreeItem->setExpanded(mBSCPtr->getPlaylistsV()[i].getInitialTreeExpansion());
+            // Restore enable state
+            rootTreeItem->setExpanded(mBSCPtr->getPlaylistsV()[i].getInitialTreeExpansion());
 
-        // Process sub-playlists
-        recursivePlaylistEnumerator(rootTreeItem, mBSCPtr->getPlaylistsR()[i], rootIndexMarker);
+            // Process sub-playlists
+            recursivePlaylistEnumerator(rootTreeItem, mBSCPtr->getPlaylistsR()[i], rootIndexMarker);
+        }
     }
 
     updateSecondaryWidgetStates(mEnableGroupTopLevel + mEnableGroupPlaylistSel);
 }
 
-void MainWindow::updateEntirePlaylist()
+void MainWindow::updateUIEntirePlaylist()
 {
    if(mBSCPtr->hasPlaylists())
    {
@@ -404,7 +426,7 @@ void MainWindow::updateEntirePlaylist()
        ui->doubleSpinBox_releaseTime->setValue(double(getSelectedPlaylist()->getInterpretedReleaseTime()));
 
        // Effect Behaviors
-       updateEffectBehaviors();
+       updateUIEffectBehaviors();
        ui->checkBox_parentBehaviorOverride->setChecked(getSelectedPlaylist()->getInterpretedOverrideParentBehaviors());
        ui->comboBox_emitter->setCurrentIndex(static_cast<int>(getSelectedPlaylist()->getInterpretedEmitter()));
 
@@ -425,14 +447,14 @@ void MainWindow::updateEntirePlaylist()
        ui->doubleSpinBox_releaseTime->clear();
        ui->checkBox_parentBehaviorOverride->setChecked(false);
        ui->comboBox_emitter->clear();
-       updateEffectBehaviors();
+       updateUIEffectBehaviors();
        mSlotsEnabled = false;
    }
 
     //  Sound Containers
-    updateSoundContainers();
+    updateUISoundContainers();
     ui->comboBox_soundContainer->setCurrentIndex(0); // Pre-select first container (comboBox slot SHOULD handle calling updateSoundContainerGroup()
-    updateSoundContainerGroup(); // Combo box signal "currentIndexChanged" is not emitted if the index did not actually change which means that by the
+    updateUISoundContainerGroup(); // Combo box signal "currentIndexChanged" is not emitted if the index did not actually change which means that by the
                                  // the time the above line fires the index is already set to 0 and therefore it may be unecessary. Additionally, this
                                  // means that "updateSoundContainerGroup" is not called since the corresponding slot isn't triggered either so it must
                                  // be called manually here.
@@ -441,7 +463,7 @@ void MainWindow::updateEntirePlaylist()
     updateSecondaryWidgetStates(mEnableGroupPlaylistSet + mEnableGroupEffectBeh + mEnableGroupSoundCon);
 }
 
-void MainWindow::updateEffectBehaviors()
+void MainWindow::updateUIEffectBehaviors()
 {
     //Clear table widget
     ui->tableWidget_effectBehaviors->clear();
@@ -460,7 +482,7 @@ void MainWindow::updateEffectBehaviors()
         ui->tableWidget_effectBehaviors->setRowCount(0);
 }
 
-void MainWindow::updateSoundContainers()
+void MainWindow::updateUISoundContainers()
 {
     mAlteringSoundContainerBoxEntries = true; // Prevents out of bounds exception due to "comboBox_currentIndexChanged" getting called from "addItem"
                                               // since the sound group combo box index isn't set till after this function completes
@@ -478,7 +500,7 @@ void MainWindow::updateSoundContainers()
     mAlteringSoundContainerBoxEntries = false;
 }
 
-void MainWindow::updateSoundContainerGroup()
+void MainWindow::updateUISoundContainerGroup()
 {
     if(mBSCPtr->hasPlaylists() && getSelectedPlaylist()->hasSoundContainers())
     {
@@ -486,11 +508,15 @@ void MainWindow::updateSoundContainerGroup()
         int frontIndex = BSC::SoundContainer::VOICE_GROUP_FRONT_STRINGS.indexOf(getSelectedSoundContainer()->getInterpretedVoiceGroupFront());
 
         // Refill front combo box if it was previously cleared
+        mAlteringSoundContainerBoxEntries = true; // Prevents mAllChangesSave from being errantly set to false since "comboBox_currentIndexChange fires" when "addItem" is used
+                                                  // and the box would report the default value as the new one before being set to its actual index
         if(ui->comboBox_voiceGroupFront->count() == 0)
             ui->comboBox_voiceGroupFront->addItems(BSC::SoundContainer::VOICE_GROUP_FRONT_STRINGS);
 
         ui->comboBox_voiceGroupFront->setCurrentIndex(frontIndex);
-        updateVoiceGroupBack(frontIndex);
+        updateUIVoiceGroupBack(frontIndex);
+
+        mAlteringSoundContainerBoxEntries = false;
 
         // Effect Containers
         ui->lineEdit_effectContainerCount->setText(QString::number(getSelectedSoundContainer()->getInterpretedEffectContainerCount()));
@@ -503,6 +529,10 @@ void MainWindow::updateSoundContainerGroup()
             ui->plainTextEdit_effectContainerDataRaw->setPlainText(Qx::String::fromByteArrayHex(
                                                                    Qx::ByteArray::RAWFromString(getSelectedSoundContainer()->getInterpretedEffectContainerData()))
                                                                    .toUpper());
+
+           // The following line will trigger first chance exceptions for every "garbage" character that is present in the provided string. Generally this is to
+           // be avoided, but in this case since an exact copy of the underlying data in QString format is desired, the garbage data is intential and these
+           // runtime exception warnings can be safely ignored
             ui->plainTextEdit_effectContainerDataString->setPlainText(getSelectedSoundContainer()->getInterpretedEffectContainerData());
         }
         else
@@ -547,10 +577,10 @@ void MainWindow::updateSoundContainerGroup()
         mSlotsEnabled = true;
     }
 
-    updateLinkedFiles();
+    updateUILinkedFiles();
 }
 
-void MainWindow::updateVoiceGroupBack(int frontIndex)
+void MainWindow::updateUIVoiceGroupBack(int frontIndex)
 {
     bool slotsEnabled = mSlotsEnabled;
     mSlotsEnabled = false;
@@ -560,7 +590,7 @@ void MainWindow::updateVoiceGroupBack(int frontIndex)
     mSlotsEnabled = slotsEnabled;
 }
 
-void MainWindow::updateLinkedFiles()
+void MainWindow::updateUILinkedFiles()
 {
     // Clear table
     ui->tableWidget_linkedFiles->clear();
@@ -631,12 +661,23 @@ void MainWindow::openBSCFile(QFile& bscFile)
 {
     // Make sure file is valid
     Qx::IO::IOOpReport openReport;
-    bool fileIsValid = BSC::fileIsValidBSC(bscFile, openReport);
+    bool verDiff = false;
+    bool fileIsValid = BSC::fileIsValidBSC(bscFile, openReport, verDiff);
 
     if(openReport.wasSuccessful())
     {
         if(fileIsValid)
         {
+            if(verDiff)
+            {
+                // Show warning prompt
+                if(QMessageBox::warning(this, QApplication::applicationName(),
+                                                               MSG_OPEN_VER_DIFF,
+                                                               QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::No)
+                    return; // Abort file open
+
+            }
+
             QByteArray fullFile;
             openReport = Qx::IO::readAllBytesFromFile(fullFile, bscFile);
 
@@ -647,7 +688,7 @@ void MainWindow::openBSCFile(QFile& bscFile)
                 mCurrentFileDir = QFileInfo(bscFile).absolutePath();
                 mFileOpen = true;
                 mBSCPtr = std::make_unique<BSC>(fullFile);
-                updateBSCTopLevel();
+                updateUIBSCTopLevel();
                 updatePrimaryWidgetStates();
                 if(mBSCPtr->hasPlaylists())
                     ui->treeWidget_playlists->setCurrentItem(ui->treeWidget_playlists->topLevelItem(0));
@@ -777,7 +818,8 @@ void MainWindow::cacheSubRoutine(bool existing)
                         {
                             QFile currentBSCFile(bscList.value(i));
                             Qx::IO::IOOpReport currentOpenReport;
-                            bool currentFileIsValid = BSC::fileIsValidBSC(currentBSCFile, currentOpenReport);
+                            bool verDiff = false; // Check currently unused since user would have already seen the file was a different BSC version when opened
+                            bool currentFileIsValid = BSC::fileIsValidBSC(currentBSCFile, currentOpenReport, verDiff);
 
                             if(currentOpenReport.wasSuccessful() && currentFileIsValid)
                             {
@@ -1044,10 +1086,10 @@ void MainWindow::all_on_menuAction_triggered()
             mCurrentFileName = "";
             mFileOpen = true;
             mBSCPtr = std::make_unique<BSC>();
-            updateBSCTopLevel();
+            updateUIBSCTopLevel();
             updatePrimaryWidgetStates();
             updateSecondaryWidgetStates(mEnableGroupTopLevel + mEnableGroupPlaylistSel + mEnableGroupPlaylistSet + mEnableGroupEffectBeh + mEnableGroupSoundCon);
-            updateEntirePlaylist();
+            updateUIEntirePlaylist();
             setChangesSavedState(false);
             updateStatusBar();
         }
@@ -1082,9 +1124,9 @@ void MainWindow::all_on_menuAction_triggered()
             mCurrentFilePath = "";
             mCurrentFileName = "";
             mFileOpen = false;
-            updateBSCTopLevel();
-            updatePrimaryWidgetStates();
             mBSCPtr.reset(); // Deletes ptr contents
+            updateUIBSCTopLevel();
+            updatePrimaryWidgetStates();
             updateStatusBar();
         }
     }
@@ -1560,7 +1602,7 @@ void MainWindow::all_on_treeWidget_currentItemChanged()
         if(senderTreeWidget == ui->treeWidget_playlists)
         {
             updateSecondaryWidgetStates(mEnableGroupPlaylistSel);
-            updateEntirePlaylist();
+            updateUIEntirePlaylist();
         }
     }
 }
@@ -1696,7 +1738,7 @@ void MainWindow::all_on_comboBox_currentIndexChanged(int newIndex)
         {
             if(!mAlteringSoundContainerBoxEntries)
             {
-                updateSoundContainerGroup();
+                updateUISoundContainerGroup();
 
                 // Refresh Enabled States
                 updateSecondaryWidgetStates(mEnableGroupSoundCon);
@@ -1704,25 +1746,31 @@ void MainWindow::all_on_comboBox_currentIndexChanged(int newIndex)
         }
         else if(senderComboBox == ui->comboBox_voiceGroupFront)
         {
-            QString newVoiceGroupFront = BSC::SoundContainer::VOICE_GROUP_FRONT_STRINGS.value(ui->comboBox_voiceGroupFront->currentIndex());
-            QString newVoiceGroupBack = BSC::SoundContainer::VOICE_GROUP_BACK_STRINGS[ui->comboBox_voiceGroupFront->currentIndex()].value(0);
-
-            if(getSelectedSoundContainer()->getInterpretedVoiceGroupFront() != newVoiceGroupFront)
+            if(!mAlteringSoundContainerBoxEntries)
             {
-                getSelectedSoundContainer()->setInterpretedVoiceGroupFront(newVoiceGroupFront);
-                getSelectedSoundContainer()->setInterpretedVoiceGroupBack(newVoiceGroupBack); // First corresponding back value
-                updateVoiceGroupBack(ui->comboBox_voiceGroupFront->currentIndex());
-                setChangesSavedState(false);
+                QString newVoiceGroupFront = BSC::SoundContainer::VOICE_GROUP_FRONT_STRINGS.value(ui->comboBox_voiceGroupFront->currentIndex());
+                QString newVoiceGroupBack = BSC::SoundContainer::VOICE_GROUP_BACK_STRINGS[ui->comboBox_voiceGroupFront->currentIndex()].value(0);
+
+                if(getSelectedSoundContainer()->getInterpretedVoiceGroupFront() != newVoiceGroupFront)
+                {
+                    getSelectedSoundContainer()->setInterpretedVoiceGroupFront(newVoiceGroupFront);
+                    getSelectedSoundContainer()->setInterpretedVoiceGroupBack(newVoiceGroupBack); // First corresponding back value
+                    updateUIVoiceGroupBack(ui->comboBox_voiceGroupFront->currentIndex());
+                    setChangesSavedState(false);
+                }
             }
         }
         else if(senderComboBox == ui->comboBox_voiceGroupBack)
         {
-            QString newVoiceGroupBack = BSC::SoundContainer::VOICE_GROUP_BACK_STRINGS[ui->comboBox_voiceGroupFront->currentIndex()].value(ui->comboBox_voiceGroupBack->currentIndex());
-
-            if(getSelectedSoundContainer()->getInterpretedVoiceGroupBack() != newVoiceGroupBack)
+            if(!mAlteringSoundContainerBoxEntries)
             {
-                getSelectedSoundContainer()->setInterpretedVoiceGroupBack(newVoiceGroupBack);
-                setChangesSavedState(false);
+                QString newVoiceGroupBack = BSC::SoundContainer::VOICE_GROUP_BACK_STRINGS[ui->comboBox_voiceGroupFront->currentIndex()].value(ui->comboBox_voiceGroupBack->currentIndex());
+
+                if(getSelectedSoundContainer()->getInterpretedVoiceGroupBack() != newVoiceGroupBack)
+                {
+                    getSelectedSoundContainer()->setInterpretedVoiceGroupBack(newVoiceGroupBack);
+                    setChangesSavedState(false);
+                }
             }
         }
     }
@@ -1819,9 +1867,7 @@ void MainWindow::all_on_doubleSpinBox_valueChanged(double newValue)
             if(!std::equal_to<float>()(getSelectedPlaylist()->getInterpretedLength(), newLength))
             {
                 getSelectedPlaylist()->setInterpretedLength(float(newValue));
-                float test1 = 2;
-                float test2 = 3;
-                std::equal_to<float>()(test1, test2);
+                setChangesSavedState(false);
             }
         }
         else if(senderDoubleSpinBox == ui->doubleSpinBox_releaseTime)
@@ -1980,7 +2026,7 @@ void MainWindow::all_on_toolButton_clicked()
             if(ui->treeWidget_playlists->currentItem() == nullptr)
             {
                 mBSCPtr->getPlaylistsR().append(BSC::Playlist(false));
-                updateBSCTopLevel();
+                updateUIBSCTopLevel();
                 ui->treeWidget_playlists->setCurrentItem(ui->treeWidget_playlists->topLevelItem(ui->treeWidget_playlists->topLevelItemCount() - 1));
 
             }
@@ -1988,7 +2034,7 @@ void MainWindow::all_on_toolButton_clicked()
             {
                 PlaylistItemMap selectedItemMap = PlaylistItemMap(ui->treeWidget_playlists->currentItem(), mBSCPtr.get());
                 selectedItemMap.getTargetPlaylistList()->insert(selectedItemMap.getTargetIndex() + 1, BSC::Playlist(!selectedItemMap.targetIsTopLevel()));
-                updateBSCTopLevel();
+                updateUIBSCTopLevel();
                 ui->treeWidget_playlists->setCurrentItem(PlaylistItemMap::getItemRelativeToMap(ui->treeWidget_playlists, selectedItemMap, selectedItemMap.targetDepth(),
                                                                                                selectedItemMap.getTargetIndex() + 1));
             }
@@ -2002,7 +2048,7 @@ void MainWindow::all_on_toolButton_clicked()
 
             PlaylistItemMap selectedItemMap = PlaylistItemMap(ui->treeWidget_playlists->currentItem(), mBSCPtr.get());
             selectedItemMap.getTargetPlaylistList()->removeAt(selectedItemMap.getTargetIndex());
-            updateBSCTopLevel();
+            updateUIBSCTopLevel();
 
             if(mBSCPtr->hasPlaylists())
             {
@@ -2016,7 +2062,7 @@ void MainWindow::all_on_toolButton_clicked()
                                                                                                    selectedItemMap.getTargetIndex() - 1));
             }
             else
-                updateEntirePlaylist();
+                updateUIEntirePlaylist();
 
              ui->lineEdit_playlistCount->setText(QString::number(mBSCPtr->getPlaylistsV().length())); // Updates playlist count in ui
         }
@@ -2029,7 +2075,7 @@ void MainWindow::all_on_toolButton_clicked()
 
             PlaylistItemMap selectedItemMap = PlaylistItemMap(ui->treeWidget_playlists->currentItem(), mBSCPtr.get());
             selectedItemMap.getTargetPlaylistList()->insert(selectedItemMap.getTargetIndex() + 1, *selectedItemMap.getTargetPlaylist()); // Dereferrence pointer so copy is made
-            updateBSCTopLevel();
+            updateUIBSCTopLevel();
 
             ui->treeWidget_playlists->setCurrentItem(PlaylistItemMap::getItemRelativeToMap(ui->treeWidget_playlists, selectedItemMap, selectedItemMap.targetDepth(),
                                                                                            selectedItemMap.getTargetIndex() + 1));
@@ -2047,7 +2093,7 @@ void MainWindow::all_on_toolButton_clicked()
 
             selectedItemMap.getTargetParentPlaylistList()->insert(selectedItemMap.getTargetParentIndex() + 1, *selectedItemMap.getTargetPlaylist()); // Dereferrence pointer so copy is made
             selectedItemMap.getTargetPlaylistList()->removeAt(selectedItemMap.getTargetIndex()); // Delete original playlist
-            updateBSCTopLevel();
+            updateUIBSCTopLevel();
 
             ui->treeWidget_playlists->setCurrentItem(PlaylistItemMap::getItemRelativeToMap(ui->treeWidget_playlists, selectedItemMap, selectedItemMap.targetDepth() - 1,
                                                                                            selectedItemMap.getTargetIndex() + 1));
@@ -2066,7 +2112,7 @@ void MainWindow::all_on_toolButton_clicked()
             // Simply using "[]" here returns a nullptr (must have to do with being a list of pointers) so "operator[]()" must be used instead
             selectedItemMap.getTargetPlaylistList()->operator[](selectedItemMap.getTargetIndex() - 1).getSubPlaylistsR().append((*selectedItemMap.getTargetPlaylist()));
             selectedItemMap.getTargetPlaylistList()->removeAt(selectedItemMap.getTargetIndex()); // Delete original playlist
-            updateBSCTopLevel();
+            updateUIBSCTopLevel();
 
             // Item playlist went into
             QTreeWidgetItem* aboveItem = PlaylistItemMap::getItemRelativeToMap(ui->treeWidget_playlists, selectedItemMap, selectedItemMap.targetDepth(),
@@ -2087,7 +2133,7 @@ void MainWindow::all_on_toolButton_clicked()
             assert(selectedItemMap.getTargetIndex() > 0); // The move up button should be inactive/disabled if the selected item if the top entry
 
             selectedItemMap.getTargetPlaylistList()->move(selectedItemMap.getTargetIndex(), selectedItemMap.getTargetIndex() - 1);
-            updatePlaylists();
+            updateUIPlaylists();
 
             ui->treeWidget_playlists->setCurrentItem(PlaylistItemMap::getItemRelativeToMap(ui->treeWidget_playlists, selectedItemMap, selectedItemMap.targetDepth(),
                                                                                            selectedItemMap.getTargetIndex() - 1));
@@ -2104,7 +2150,7 @@ void MainWindow::all_on_toolButton_clicked()
             assert(selectedItemMap.getTargetIndex() < selectedItemMap.getTargetPlaylistList()->length() - 1); // The move down button should be inactive/disabled if the
                                                                                                               // selected item if the bottom entry
             selectedItemMap.getTargetPlaylistList()->move(selectedItemMap.getTargetIndex(), selectedItemMap.getTargetIndex() + 1);
-            updatePlaylists();
+            updateUIPlaylists();
 
             ui->treeWidget_playlists->setCurrentItem(PlaylistItemMap::getItemRelativeToMap(ui->treeWidget_playlists, selectedItemMap, selectedItemMap.targetDepth(),
                                                                                            selectedItemMap.getTargetIndex() + 1));
@@ -2118,14 +2164,14 @@ void MainWindow::all_on_toolButton_clicked()
             if(selectedIndex < 0)
             {
                 getSelectedPlaylist()->addInterpretedEffectBehavior(BSC::Playlist::EFFECT_BEHAVIOR_DEFAULT);
-                updateEffectBehaviors();
+                updateUIEffectBehaviors();
                 ui->tableWidget_effectBehaviors->setCurrentCell(getSelectedPlaylist()->getInterpretedEffectBehaviorsV().length() - 1, 0);
 
             }
             else
             {
                 getSelectedPlaylist()->addInterpretedEffectBehavior(BSC::Playlist::EFFECT_BEHAVIOR_DEFAULT, selectedIndex + 1);
-                updateEffectBehaviors();
+                updateUIEffectBehaviors();
                 ui->tableWidget_effectBehaviors->setCurrentCell(selectedIndex + 1, 0);
             }
         }
@@ -2135,7 +2181,7 @@ void MainWindow::all_on_toolButton_clicked()
             assert(selectedIndex > -1); // The remove button should be inactive/disabled if nothing is selected
 
             getSelectedPlaylist()->removeInterpretedEffectBehavior(selectedIndex);
-            updateEffectBehaviors();
+            updateUIEffectBehaviors();
             if(ui->tableWidget_effectBehaviors->rowCount() > 0)
                 ui->tableWidget_effectBehaviors->setCurrentCell(std::max(0,selectedIndex - 1), 0);
         }
@@ -2145,7 +2191,7 @@ void MainWindow::all_on_toolButton_clicked()
             assert(selectedIndex > -1); // The copy button should be inactive/disabled if nothing is selected
 
             getSelectedPlaylist()->copyInterpretedEffectBehavior(selectedIndex, selectedIndex + 1);
-            updateEffectBehaviors();
+            updateUIEffectBehaviors();
             ui->tableWidget_effectBehaviors->setCurrentCell(selectedIndex + 1, 0);
         }
         else if(senderToolbutton == ui->toolButton_effectBehaviorsUp)
@@ -2154,7 +2200,7 @@ void MainWindow::all_on_toolButton_clicked()
             assert(selectedIndex > 0); // The move up button should be inactive/disabled if nothing is selected or the selected item if the top entry
 
             getSelectedPlaylist()->moveInterpretedEffectBehavior(selectedIndex, selectedIndex - 1);
-            updateEffectBehaviors();
+            updateUIEffectBehaviors();
             ui->tableWidget_effectBehaviors->setCurrentCell(selectedIndex - 1, 0);
         }
         else if(senderToolbutton == ui->toolButton_effectBehaviorsDown)
@@ -2163,7 +2209,7 @@ void MainWindow::all_on_toolButton_clicked()
             assert(selectedIndex > -1 && selectedIndex < ui->tableWidget_effectBehaviors->rowCount() - 1); // The move down button should be inactive/disabled
                                                                                                         // if nothing is selected or the selected item if the bottom entry
             getSelectedPlaylist()->moveInterpretedEffectBehavior(selectedIndex, selectedIndex + 1);
-            updateEffectBehaviors();
+            updateUIEffectBehaviors();
             ui->tableWidget_effectBehaviors->setCurrentCell(selectedIndex + 1, 0);
         }
 
@@ -2174,18 +2220,18 @@ void MainWindow::all_on_toolButton_clicked()
             if(selectedIndex < 0)
             {
                 getSelectedPlaylist()->addSoundContainer(BSC::SoundContainer());
-                updateSoundContainers();
+                updateUISoundContainers();
                 ui->comboBox_soundContainer->setCurrentIndex(getSelectedPlaylist()->soundContainerCount() - 1);
 
             }
             else
             {
                 getSelectedPlaylist()->addSoundContainer(BSC::SoundContainer(), selectedIndex + 1);
-                updateSoundContainers();
+                updateUISoundContainers();
                 ui->comboBox_soundContainer->setCurrentIndex(selectedIndex + 1);
             }
 
-            updateSoundContainerGroup(); // Must call manually to ensure update since the above may have moved the selected index
+            updateUISoundContainerGroup(); // Must call manually to ensure update since the above may have moved the selected index
                                          // to the desired index so using "setCurrentIndex()" on the same index won't trigger the corresponding slot
         }
         else if(senderToolbutton == ui->toolButton_soundContainerRemove)
@@ -2194,11 +2240,11 @@ void MainWindow::all_on_toolButton_clicked()
             assert(selectedIndex > -1); // The remove button should be inactive/disabled if nothing is selected
 
             getSelectedPlaylist()->removeSoundContainer(selectedIndex);
-            updateSoundContainers();
+            updateUISoundContainers();
             if(ui->comboBox_soundContainer->count() > 0)
                 ui->comboBox_soundContainer->setCurrentIndex(std::max(0, selectedIndex - 1));
 
-            updateSoundContainerGroup(); // Must call manually to ensure update since the above may have moved the selected index
+            updateUISoundContainerGroup(); // Must call manually to ensure update since the above may have moved the selected index
                                          // to the desired index so using "setCurrentIndex()" on the same index won't trigger the corresponding slot
         }
         else if(senderToolbutton == ui->toolButton_soundContainerCopy)
@@ -2207,10 +2253,10 @@ void MainWindow::all_on_toolButton_clicked()
             assert(selectedIndex > -1); // The copy button should be inactive/disabled if nothing is selected
 
             getSelectedPlaylist()->copySoundContainer(selectedIndex, selectedIndex + 1);
-            updateSoundContainers();
+            updateUISoundContainers();
             ui->comboBox_soundContainer->setCurrentIndex(selectedIndex + 1);
 
-            updateSoundContainerGroup(); // Must call manually to ensure update since the above may have moved the selected index
+            updateUISoundContainerGroup(); // Must call manually to ensure update since the above may have moved the selected index
                                          // to the desired index so using "setCurrentIndex()" on the same index won't trigger the corresponding slot
 
         }
@@ -2220,10 +2266,10 @@ void MainWindow::all_on_toolButton_clicked()
             assert(selectedIndex > 0); // The move up button should be inactive/disabled if nothing is selected or the selected item if the top entry
 
             getSelectedPlaylist()->moveSoundContainer(selectedIndex, selectedIndex - 1);
-            updateSoundContainers();
+            updateUISoundContainers();
             ui->comboBox_soundContainer->setCurrentIndex(selectedIndex - 1);
 
-            updateSoundContainerGroup(); // Must call manually to ensure update since the above may have moved the selected index
+            updateUISoundContainerGroup(); // Must call manually to ensure update since the above may have moved the selected index
                                          // to the desired index so using "setCurrentIndex()" on the same index won't trigger the corresponding slot
         }
         else if(senderToolbutton == ui->toolButton_soundContainerDown)
@@ -2232,10 +2278,10 @@ void MainWindow::all_on_toolButton_clicked()
             assert(selectedIndex > -1 && selectedIndex <= ui->comboBox_soundContainer->count() - 1); // The move down button should be inactive/disabled
                                                                                                         // if nothing is selected or the selected item if the bottom entry
             getSelectedPlaylist()->moveSoundContainer(selectedIndex, selectedIndex + 1);
-            updateSoundContainers();
+            updateUISoundContainers();
             ui->comboBox_soundContainer->setCurrentIndex(selectedIndex + 1);
 
-            updateSoundContainerGroup(); // Must call manually to ensure update since the above may have moved the selected index
+            updateUISoundContainerGroup(); // Must call manually to ensure update since the above may have moved the selected index
                                          // to the desired index so using "setCurrentIndex()" on the same index won't trigger the corresponding slot
         }
 
@@ -2248,14 +2294,14 @@ void MainWindow::all_on_toolButton_clicked()
             if(selectedIndex < 0)
             {
                 currentSoundContainer->addInterpretedLinkedFile(BSC::SoundContainer::LINKED_FILE_DEFAULT);
-                updateLinkedFiles();
+                updateUILinkedFiles();
                 ui->tableWidget_linkedFiles->setCurrentCell(currentSoundContainer->getInterpretedLinkedFilesV().length() - 1, 0);
 
             }
             else
             {
                 currentSoundContainer->addInterpretedLinkedFile(BSC::SoundContainer::LINKED_FILE_DEFAULT, selectedIndex + 1);
-                updateLinkedFiles();
+                updateUILinkedFiles();
                 ui->tableWidget_linkedFiles->setCurrentCell(selectedIndex + 1, 0);
             }
         }
@@ -2266,7 +2312,7 @@ void MainWindow::all_on_toolButton_clicked()
             assert(selectedIndex > -1); // The remove button should be inactive/disabled if nothing is selected
 
             currentSoundContainer->removeInterpretedLinkedFile(selectedIndex);
-            updateLinkedFiles();
+            updateUILinkedFiles();
             if(ui->tableWidget_linkedFiles->rowCount() > 0)
                 ui->tableWidget_linkedFiles->setCurrentCell(std::max(0,selectedIndex - 1), 0);
         }
@@ -2277,7 +2323,7 @@ void MainWindow::all_on_toolButton_clicked()
             assert(selectedIndex > -1); // The copy button should be inactive/disabled if nothing is selected
 
             currentSoundContainer->copyInterpretedLinkedFile(selectedIndex, selectedIndex + 1);
-            updateLinkedFiles();
+            updateUILinkedFiles();
             ui->tableWidget_linkedFiles->setCurrentCell(selectedIndex + 1, 0);
         }
         else if(senderToolbutton == ui->toolButton_linkedFilesUp)
@@ -2287,7 +2333,7 @@ void MainWindow::all_on_toolButton_clicked()
             assert(selectedIndex > 0); // The move up button should be inactive/disabled if nothing is selected or the selected item if the top entry
 
             currentSoundContainer->moveInterpretedLinkedFile(selectedIndex, selectedIndex - 1);
-            updateLinkedFiles();
+            updateUILinkedFiles();
             ui->tableWidget_linkedFiles->setCurrentCell(selectedIndex - 1, 0);
         }
         else if(senderToolbutton == ui->toolButton_linkedFilesDown)
@@ -2297,7 +2343,7 @@ void MainWindow::all_on_toolButton_clicked()
             assert(selectedIndex > -1 && selectedIndex <= ui->tableWidget_linkedFiles->rowCount() - 1); // The move down button should be inactive/disabled
                                                                                                         // if nothing is selected or the selected item if the bottom entry
             currentSoundContainer->moveInterpretedLinkedFile(selectedIndex, selectedIndex + 1);
-            updateLinkedFiles();
+            updateUILinkedFiles();
             ui->tableWidget_linkedFiles->setCurrentCell(selectedIndex + 1, 0);
         }
 
@@ -2334,7 +2380,7 @@ void MainWindow::all_on_plainTextEdit_textChanged()
                     mECLoopProtection = true;
 
                     QByteArray dataRaw = Qx::ByteArray::RAWFromStringHex(newText);
-                    QString dataText = Qx::String::fromByteArray(dataRaw);
+                    QString dataText = Qx::String::fromByteArrayDirectly(dataRaw);
 
                     if(getSelectedSoundContainer()->getInterpretedEffectContainerData() != dataText)
                     {

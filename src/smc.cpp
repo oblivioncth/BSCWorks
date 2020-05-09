@@ -83,7 +83,7 @@ bool SMC::separateData()
 void SMC::interpretData()
 {
     for (int i = 0; i< mCacheListR.length(); i++)
-        mCacheListI.append(Qx::String::fromByteArray(mCacheListR.value(i)));
+        mCacheListI.append(Qx::String::fromByteArrayDirectly(mCacheListR.value(i)));
 }
 
 bool SMC::rawEntryIsValid(QByteArray entry)

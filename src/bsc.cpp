@@ -35,19 +35,20 @@ BSC::BSC()
 
     // Segmented Interpreted Data
     mTweenerI = "00 00 00 00 00";
-    mFormatVerI = FORMAT_TAG_DEFAULT;
+    mFormatVerI = FORMAT_VER_DEFAULT;
     mPlaylistCountI = PLAYLIST_COUNT_DEFAULT;
 }
 
 //-Class Functions------------------------------------------------------------------------------------------------
 //Public:
-bool BSC::fileIsValidBSC(QFile& possibleBSC, Qx::IO::IOOpReport& reportBuffer)
+bool BSC::fileIsValidBSC(QFile& possibleBSC, Qx::IO::IOOpReport& reportBuffer, bool& versionMismatch)
 {
     QByteArray headerSection;
-    reportBuffer = Qx::IO::readBytesFromFile(headerSection, possibleBSC, 0, 12);
+    reportBuffer = Qx::IO::readBytesFromFile(headerSection, possibleBSC, 0, 16);
+    versionMismatch = headerSection.mid(13, 4) != FORMAT_VER_TARGET_RAW;
 
     return reportBuffer.wasSuccessful() &&
-           Qx::String::fromByteArray(headerSection.left(4)) == BSC::EA_SHARK_SIG && Qx::String::fromByteArray(headerSection.mid(9, 4)) == BSC::BSC_SIG;
+           Qx::String::fromByteArrayDirectly(headerSection.left(4)) == EA_SHARK_SIG && Qx::String::fromByteArrayDirectly(headerSection.mid(9, 4)) == BSC::BSC_SIG;
 }
 
 //-Instance Functions------------------------------------------------------------------------------------------------
@@ -77,24 +78,23 @@ QByteArray BSC::rebuildRawFile()
     std::function<void(BSC::Playlist& parentPlaylist)> recursiveSubPlaylistDeinterpriation;
     recursiveSubPlaylistDeinterpriation = [&recursiveSubPlaylistDeinterpriation](BSC::Playlist& parentPlaylist)->void
     {
-        for(int i = 0; i <parentPlaylist.subPlaylistCount(); i++)
+        for(int i = 0; i < parentPlaylist.subPlaylistCount(); i++)
         {
             parentPlaylist.getSubPlaylistsR()[i].deinterpretData();
-            for(int j = 0; j <parentPlaylist.getSubPlaylistsR()[i].soundContainerCount(); j++)
-                parentPlaylist.getSubPlaylistsR()[i].getSoundContainersR()[j].deinterpretData();
-
             recursiveSubPlaylistDeinterpriation(parentPlaylist.getSubPlaylistsR()[i]);
         }
     };
 
     // Dump all interpreted data back to raw
+
+    // Top level data
     deinterpretData();
+
+    // Playlist data
     for(int i = 0; i < mPlaylists.length(); i++)
     {
         // Top level playlist
         mPlaylists[i].deinterpretData();
-        for(int j = 0; j < mPlaylists[i].soundContainerCount(); j++)
-            mPlaylists[i].getSoundContainersR()[j].deinterpretData();
 
         // Sub playlists
         recursiveSubPlaylistDeinterpriation(mPlaylists[i]);
@@ -262,6 +262,9 @@ void BSC::Playlist::deinterpretData()
 
     mOverrideParentBehaviorsR = Qx::ByteArray::RAWFromPrimitive(mOverrideParentBehaviorsI);
     mEmitterR = enumEmitterToRaw(mEmitterI);
+
+    for(int i = 0; i < mSoundContainers.length(); i++)
+        mSoundContainers[i].deinterpretData();
 }
 
 QByteArray BSC::Playlist::getRestitchedData()
@@ -339,10 +342,10 @@ void BSC::Playlist::separateData(int &dataCursor, QByteArray &rawData)
     uint32_t scNum;
     uint32_t spNum;
 
-    // Data cursor starts on container index (or playback mode name) from parent BSC
+    // Data cursor starts on container index (or playback mode name length if not sub-playlist) from parent BSC
     if(mSubPlaylist)
     {
-            mPlaylistIndexR =rawData.mid(dataCursor,L_SUB_PL_INDEX);
+            mPlaylistIndexR = rawData.mid(dataCursor,L_SUB_PL_INDEX);
         dataCursor += L_SUB_PL_INDEX; // Move to playback mode name length start
     }
 
@@ -369,7 +372,7 @@ void BSC::Playlist::separateData(int &dataCursor, QByteArray &rawData)
         mReleaseTimeR = rawData.mid(dataCursor,L_RELEASE_TIME);
     dataCursor += L_RELEASE_TIME; // Move to number of effect behaviors
         ebNum = qFromLittleEndian<quint32>(rawData.mid(dataCursor,L_EFF_BEH_NUM));
-    dataCursor += L_EFF_BEH_NUM; // Move to first effect behavior name length byte
+    dataCursor += L_EFF_BEH_NUM; // Move to first effect behavior name length byte\override flag if no effect behaviors
 
     for(int i = 0; i < int(ebNum); i++)
     {
@@ -386,7 +389,7 @@ void BSC::Playlist::separateData(int &dataCursor, QByteArray &rawData)
         mEmitterR = rawData.mid(dataCursor,int(emitterNameLength));
     dataCursor += emitterNameLength; // Move to number of sound containers start
         scNum = qFromLittleEndian<quint32>(rawData.mid(dataCursor,L_SND_CNTR_NUM));
-    dataCursor += L_SND_CNTR_NUM; // Move to first sound container index start
+    dataCursor += L_SND_CNTR_NUM; // Move to first sound container index start/sub-playlist count if no containers
 
     // Create SoundContainers in order to continue sequential movement of the data cursor
     for(int i = 0; i < int(scNum); i++)
@@ -660,7 +663,7 @@ void BSC::SoundContainer::interpretData()
     // mContainerIndexI = qFromLittleEndian<qint32>(mContainerIndexR); // Not needed, index can be infered from list index when writing
 
     // Voice Group
-    QString wholeString = Qx::String::fromByteArray(mVoiceGroupR);
+    QString wholeString = Qx::String::fromByteArrayDirectly(mVoiceGroupR);
     int sepPos = wholeString.indexOf(VOICE_GROU_SEP);
     mVoiceGroupFrontI = wholeString.left(sepPos);
     mVoiceGroupBackI = wholeString.mid(sepPos + VOICE_GROU_SEP.length());
@@ -668,7 +671,7 @@ void BSC::SoundContainer::interpretData()
     // Others
     mIs3DI = Qx::ByteArray::RAWToPrimitive<bool>(mIs3DR);
     mIsLoopedI = Qx::ByteArray::RAWToPrimitive<bool>(mIsLoopedR);
-    mUsingSpeedVolumeTriggerI = Qx::ByteArray::RAWToPrimitive<bool>(mIsLoopedR);
+    mUsingSpeedVolumeTriggerI = Qx::ByteArray::RAWToPrimitive<bool>(mUsingSpeedVolumeTriggerR);
     mRandomWeightI = qFromLittleEndian<quint32>(mRandomWeightR);
     mAmplitudeFactorI = Qx::ByteArray::RAWToPrimitive<float>(mAmplitudeFactorR, Qx::Endian::LE);
     mDopplerRatioI = Qx::ByteArray::RAWToPrimitive<float>(mDopplerRatioR, Qx::Endian::LE);
@@ -681,7 +684,7 @@ void BSC::SoundContainer::interpretData()
         mLinkedFilesI.append(mLinkedFilesR.value(i));
 
     mEffectContainerCountI = qFromLittleEndian<quint32>(mEffectContainerCountR);
-    mEffectContainerDataI = Qx::String::fromByteArray(mEffectContainerDataR);
+    mEffectContainerDataI = Qx::String::fromByteArrayDirectly(mEffectContainerDataR);
 }
 
 BSC::SoundContainer::ReasonableSCType BSC::SoundContainer::determineReasonableSCDataType(QByteArray rawVal)

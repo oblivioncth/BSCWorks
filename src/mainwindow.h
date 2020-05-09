@@ -27,6 +27,10 @@ private:
     static inline const QString MENU_SAVE_AS_TITLE = "Save As";
     static inline const QString MENU_SAVE_TITLE = "Save";
     static inline const QString MENU_OPEN_TITLE = "Open";
+    static inline const QString MSG_OPEN_VER_DIFF = "WARNING: The selected file's BSC format version is different from what this application was designed for (v14).\n\n"
+                                                    "The editor may be able to handle this file correctly, but opening it may cause the editor to crash or exhibit undefined "
+                                                    "behavior, and saved files may be corrupted regardless of any ""Saved Succesfully"" messages. Proceed at your own risk "
+                                                    "and make sure you have a backup of this file.\n\nWould you like to continue opening the file?";
     static inline const QString MSG_SAVE_SUCCESS = "File ""%1"" was saved successfully.";
     static inline const QString MSG_SAVE_FAIL = "Error saving ""%1""!";
     static inline const QString MSG_SAVE_PROMPT_TXT = "The currently open file has unsaved changes.";
@@ -110,6 +114,8 @@ private:
     static inline const QString STATUS_BAR_NEW_FILE = "[NEW UNSAVED FILE]";
     static const int STATUS_BAR_INDENT = 10;
 
+    static const int DOUBLE_SPINNER_DECIMAL_PRECISION = 4;
+
 //-Instance Variables--------------------------------------------------------------------------------------------
 private:
     Ui::MainWindow *ui; 
@@ -155,14 +161,14 @@ private:
     void updatePrimaryWidgetStates();
     void updateSecondaryWidgetStates(QWidgetList widgetsToUpdate);
     void recursivePlaylistEnumerator(QTreeWidgetItem* parentTreeItem, BSC::Playlist &parentPlaylist, QString parentIndexMarker); // Only reads playlists so a copy is fine (2nd arg)
-    void updateBSCTopLevel();
-    void updatePlaylists();
-    void updateEntirePlaylist();
-    void updateEffectBehaviors();
-    void updateSoundContainers();
-    void updateSoundContainerGroup();
-    void updateVoiceGroupBack(int frontIndex);
-    void updateLinkedFiles();
+    void updateUIBSCTopLevel();
+    void updateUIPlaylists();
+    void updateUIEntirePlaylist();
+    void updateUIEffectBehaviors();
+    void updateUISoundContainers();
+    void updateUISoundContainerGroup();
+    void updateUIVoiceGroupBack(int frontIndex);
+    void updateUILinkedFiles();
     void updateStatusBar();
     void setChangesSavedState(bool changesSaved);
     bool saveChangesPrompt(bool exit);
