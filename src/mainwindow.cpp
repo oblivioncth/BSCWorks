@@ -1364,7 +1364,7 @@ void MainWindow::all_on_menuAction_triggered()
                     if(smfList.isEmpty())
                     {
                         batchResult.setIcon(QMessageBox::Critical);
-                        batchResult.setText(MSG_BATCH_SMF_NO_FILES);
+                        batchResult.setText(MSG_BATCH_SMF_NO_FILES.arg(QDir::toNativeSeparators(smfFolderPath)));
                     }
                     else if(smfList.length() == failedConvList.length())
                     {
@@ -1467,7 +1467,7 @@ void MainWindow::all_on_menuAction_triggered()
                                 {
                                     WAV currentWAV(wavData);
                                     QString smfOutPath = wavList.value(i).remove(wavFolderPath).prepend(smfFolderPath);
-                                    smfOutPath = smfOutPath.left(smfOutPath.length() - 3).append(WAV::FILE_EXT);
+                                    smfOutPath = smfOutPath.left(smfOutPath.length() - 3).append(SMF::FILE_EXT);
 
                                     QFile smfOut(smfOutPath);
 
@@ -1529,7 +1529,7 @@ void MainWindow::all_on_menuAction_triggered()
                     if(wavList.isEmpty())
                     {
                         batchResult.setIcon(QMessageBox::Critical);
-                        batchResult.setText(MSG_BATCH_WAV_NO_FILES);
+                        batchResult.setText(MSG_BATCH_WAV_NO_FILES.arg(QDir::toNativeSeparators(wavFolderPath)));
                     }
                     else if(wavList.length() == failedConvList.length())
                     {

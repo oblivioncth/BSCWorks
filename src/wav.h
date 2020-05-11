@@ -15,12 +15,10 @@ public:
     static inline const QString FILE_EXT = "wav";
     static inline const QString RIFF_SIG = "RIFF";
     static inline const QString WAV_SIG = "WAVE";
-    static inline const QString FORMAT_SIG = "fmt ";
 
     static const int L_RIFF_SIG = 0x04;
     static const int L_RIFF_LEN = 0x04;
     static const int L_WAV_SIG = 0x04;
-    static const int L_FORMAT_SIG = 0x04;
 
 //-Instance Variables--------------------------------------------------------------------------------------------
 private:
