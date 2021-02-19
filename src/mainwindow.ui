@@ -1621,7 +1621,7 @@ Alternatively, simply drag-and-drop a BSC into this window.</string>
      <x>0</x>
      <y>0</y>
      <width>958</width>
-     <height>21</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -1645,11 +1645,11 @@ Alternatively, simply drag-and-drop a BSC into this window.</string>
     <addaction name="actionBuild_New_Speechmanager_Cache"/>
     <addaction name="actionUpdate_Speechmanager_Cache"/>
     <addaction name="separator"/>
-    <addaction name="actionConvert_SMF_WAV"/>
-    <addaction name="actionConvert_WAV_SMF"/>
+    <addaction name="actionConvert_SMF_to_WAV_MP3"/>
+    <addaction name="actionConvert_WAV_MP3_to_SMF"/>
     <addaction name="separator"/>
-    <addaction name="actionBatch_SMF_WAV"/>
-    <addaction name="actionBatch_WAV_SMF"/>
+    <addaction name="actionBatch_SMF_to_WAV_MP3"/>
+    <addaction name="actionBatch_WAV_MP3_to_SMF"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -1685,10 +1685,10 @@ Alternatively, simply drag-and-drop a BSC into this window.</string>
    <addaction name="actionBuild_New_Speechmanager_Cache"/>
    <addaction name="actionUpdate_Speechmanager_Cache"/>
    <addaction name="separator"/>
-   <addaction name="actionConvert_SMF_WAV"/>
-   <addaction name="actionConvert_WAV_SMF"/>
-   <addaction name="actionBatch_SMF_WAV"/>
-   <addaction name="actionBatch_WAV_SMF"/>
+   <addaction name="actionConvert_SMF_to_WAV_MP3"/>
+   <addaction name="actionConvert_WAV_MP3_to_SMF"/>
+   <addaction name="actionBatch_SMF_to_WAV_MP3"/>
+   <addaction name="actionBatch_WAV_MP3_to_SMF"/>
   </widget>
   <widget class="QStatusBar" name="statusBar">
    <property name="sizeGripEnabled">
@@ -1800,49 +1800,49 @@ Alternatively, simply drag-and-drop a BSC into this window.</string>
     <string>Ctrl+B</string>
    </property>
   </action>
-  <action name="actionConvert_SMF_WAV">
+  <action name="actionConvert_SMF_to_WAV_MP3">
    <property name="icon">
     <iconset resource="../resources.qrc">
-     <normaloff>:/res/Convert_SMF_to_WAV.png</normaloff>:/res/Convert_SMF_to_WAV.png</iconset>
+     <normaloff>:/res/Convert_SMF_to_WAV_MP3.png</normaloff>:/res/Convert_SMF_to_WAV_MP3.png</iconset>
    </property>
    <property name="text">
-    <string>Convert SMF -&gt; WAV</string>
+    <string>Convert SMF -&gt; WAV/MP3</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+W</string>
    </property>
   </action>
-  <action name="actionConvert_WAV_SMF">
+  <action name="actionConvert_WAV_MP3_to_SMF">
    <property name="icon">
     <iconset resource="../resources.qrc">
-     <normaloff>:/res/Convert_WAV_to_SMF.png</normaloff>:/res/Convert_WAV_to_SMF.png</iconset>
+     <normaloff>:/res/Convert_WAV_MP3_to_SMF.png</normaloff>:/res/Convert_WAV_MP3_to_SMF.png</iconset>
    </property>
    <property name="text">
-    <string>Convert WAV -&gt; SMF</string>
+    <string>Convert WAV/MP3 -&gt; SMF</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+M</string>
    </property>
   </action>
-  <action name="actionBatch_SMF_WAV">
+  <action name="actionBatch_SMF_to_WAV_MP3">
    <property name="icon">
     <iconset resource="../resources.qrc">
-     <normaloff>:/res/Batch_SMF_to_WAV.png</normaloff>:/res/Batch_SMF_to_WAV.png</iconset>
+     <normaloff>:/res/Batch_SMF_to_WAV_MP3.png</normaloff>:/res/Batch_SMF_to_WAV_MP3.png</iconset>
    </property>
    <property name="text">
-    <string>Batch SMF -&gt; WAV</string>
+    <string>Batch SMF -&gt; WAV/MP3</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+W</string>
    </property>
   </action>
-  <action name="actionBatch_WAV_SMF">
+  <action name="actionBatch_WAV_MP3_to_SMF">
    <property name="icon">
     <iconset resource="../resources.qrc">
-     <normaloff>:/res/Batch_WAV_to_SMF.png</normaloff>:/res/Batch_WAV_to_SMF.png</iconset>
+     <normaloff>:/res/Batch_WAV_MP3_to_SMF.png</normaloff>:/res/Batch_WAV_MP3_to_SMF.png</iconset>
    </property>
    <property name="text">
-    <string>Batch WAV -&gt; SMF</string>
+    <string>Batch WAV/MP3 -&gt; SMF</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+M</string>
@@ -2831,7 +2831,7 @@ Alternatively, simply drag-and-drop a BSC into this window.</string>
    </hints>
   </connection>
   <connection>
-   <sender>actionBatch_WAV_SMF</sender>
+   <sender>actionBatch_WAV_MP3_to_SMF</sender>
    <signal>triggered(bool)</signal>
    <receiver>MainWindow</receiver>
    <slot>all_on_menuAction_triggered()</slot>
@@ -2879,7 +2879,7 @@ Alternatively, simply drag-and-drop a BSC into this window.</string>
    </hints>
   </connection>
   <connection>
-   <sender>actionConvert_SMF_WAV</sender>
+   <sender>actionConvert_SMF_to_WAV_MP3</sender>
    <signal>triggered(bool)</signal>
    <receiver>MainWindow</receiver>
    <slot>all_on_menuAction_triggered()</slot>
@@ -2895,7 +2895,7 @@ Alternatively, simply drag-and-drop a BSC into this window.</string>
    </hints>
   </connection>
   <connection>
-   <sender>actionConvert_WAV_SMF</sender>
+   <sender>actionConvert_WAV_MP3_to_SMF</sender>
    <signal>triggered(bool)</signal>
    <receiver>MainWindow</receiver>
    <slot>all_on_menuAction_triggered()</slot>
@@ -2911,7 +2911,7 @@ Alternatively, simply drag-and-drop a BSC into this window.</string>
    </hints>
   </connection>
   <connection>
-   <sender>actionBatch_SMF_WAV</sender>
+   <sender>actionBatch_SMF_to_WAV_MP3</sender>
    <signal>triggered(bool)</signal>
    <receiver>MainWindow</receiver>
    <slot>all_on_menuAction_triggered()</slot>

@@ -41,10 +41,10 @@ BSC::BSC()
 
 //-Class Functions------------------------------------------------------------------------------------------------
 //Public:
-bool BSC::fileIsValidBSC(QFile& possibleBSC, Qx::IO::IOOpReport& reportBuffer, bool& versionMismatch)
+bool BSC::fileIsValidBSC(QFile& possibleBSC, Qx::IOOpReport& reportBuffer, bool& versionMismatch)
 {
     QByteArray headerSection;
-    reportBuffer = Qx::IO::readBytesFromFile(headerSection, possibleBSC, 0, 16);
+    reportBuffer = Qx::readBytesFromFile(headerSection, possibleBSC, 0, 16);
     versionMismatch = headerSection.mid(13, 4) != FORMAT_VER_TARGET_RAW;
 
     return reportBuffer.wasSuccessful() &&

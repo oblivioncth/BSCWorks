@@ -1,35 +1,51 @@
 #ifndef QX_H
 #define QX_H
 
-//#define REQUIRES(...) std::enable_if_t<__VA_ARGS__> // enable_if Macro; allows REQUIRES(std::is_arithmetic_v<T>) for example
-//TODO: Possibly remove this
+#define ENABLE_IF(...) std::enable_if_t<__VA_ARGS__::value, int> = 0 // enable_if Macro; allows ENABLE_IF(std::is_arithmetic<T>) for example
+#define ENABLE_IF2(...) std::enable_if_t<__VA_ARGS__::value, int> // enable_if Macro with no default argument, use if template was already forward declared
 
 #include <QHash>
 #include <QCryptographicHash>
 #include <QRegularExpression>
 #include <QtEndian>
 #include <QWidget>
+#include <QSet>
+#include <QDateTime>
+#include <QMessageBox>
+#include "assert.h"
 
 namespace Qx
 {
 //-Class Forward Declarations---------------------------------------------------------------------------------------------
-template <typename T, std::enable_if_t<std::is_arithmetic_v<T>, int> = 0>
+template <typename T, ENABLE_IF(std::is_arithmetic<T>)>
 class NII;
 
-class Endian;
-
 //-Traits-------------------------------------------------------------------------------------------------------
+// TODO: Get these working where they make sense
 template <class T, template <class...> class Template>
 struct is_specialization : std::false_type {};
 
 template <template <class...> class Template, class... Args>
 struct is_specialization<Template<Args...>, Template> : std::true_type {};
 
+template<typename T, typename... Others>
+struct is_any : std::disjunction<std::is_same<T, Others>...>
+{};
+
+template<typename T, typename... Others>
+bool is_any_v = is_any<T, Others...>::value;
+
+template<typename T>
+using is_json_type = std::bool_constant<is_any<T, bool, double, QString, QJsonArray, QJsonObject>::value>;
+
+template<typename T>
+bool is_json_type_v = is_json_type<T>::value;
+
 //-Functions----------------------------------------------------------------------------------------------------
 template <typename T>
 struct typeIdentifier {typedef T type; }; // Forces compiler to deduce the type of T from only one argument so that implicit conversions can be used for the others
 
-template<typename T> //FIXME: Template is not type limited!
+template<typename T, ENABLE_IF(std::is_integral<T>)>
 T rangeToLength(T start, T end)
 {
     // Returns the length from start to end including start, primarily for support of NII (Negative Is Infinity)
@@ -38,31 +54,14 @@ T rangeToLength(T start, T end)
     return length;
 }
 
-template<typename T, std::enable_if_t<std::is_arithmetic_v<T>, int> = 0>
+template<typename T, ENABLE_IF(std::is_arithmetic<T>)>
 static bool isOdd(T num) { return num % 2; }
 
-template<typename T, std::enable_if_t<std::is_arithmetic_v<T>, int> = 0>
+template<typename T, ENABLE_IF(std::is_arithmetic<T>)>
 static bool isEven(T num) { return !isOdd(num); }
 
-//int testFunction()
-//{
-//    NII<long> temp(5);
-//    NII<long> temptwo(4);
-
-//    std::vector<int> var;
-
-//    bool check = is_specialization<std::vector<int>, std::vector>::value;
-//   NII<long> test = rangeToLength(temp,temptwo);
-
-//   //return rangeToLength(3,4);
-
-
-
-//    return 10;
-//}
-
 //-Classes------------------------------------------------------------------------------------------------------
-class Endian
+class Endian // Must be before its use, hence why this is out of alphabetical order
 {
 //-Class Types----------------------------------------------------------------------------------------------
 public:
@@ -141,7 +140,7 @@ class ByteArray
 {
 //-Class Functions----------------------------------------------------------------------------------------------
 public:
-    template<typename T, std::enable_if_t<std::is_integral_v<T>, int> = 0>
+    template<typename T, ENABLE_IF(std::is_integral<T>)>
     static QByteArray RAWFromPrimitive(T primitive, Endian::Endianness endianness = Endian::LE)
     {
         QByteArray rawBytes;
@@ -165,7 +164,7 @@ public:
         return rawBytes;
     }
 
-    template<typename T, std::enable_if_t<std::is_floating_point_v<T>, int> = 0>
+    template<typename T, ENABLE_IF(std::is_floating_point<T>)>
     static QByteArray RAWFromPrimitive(T primitive, Endian::Endianness endianness = Endian::LE)
     {
         QByteArray rawBytes;
@@ -201,7 +200,7 @@ public:
         return rawBytes;
     }
 
-    template<typename T, std::enable_if_t<std::is_fundamental_v<T>, int> = 0>
+    template<typename T, ENABLE_IF(std::is_fundamental<T>)>
     static T RAWToPrimitive(QByteArray ba, Endian::Endianness endianness = Endian::LE)
     {
         static_assert(std::numeric_limits<float>::is_iec559, "Only supports IEC 559 (IEEE 754) float"); // For floats
@@ -268,6 +267,201 @@ public:
     static bool isHexNumber(QChar hexNum);
 };
 
+class DateTime
+{
+//-Class Variables----------------------------------------------------------------------------------------------
+private:
+    static const qint64 FILETIME_EPOCH_OFFSET_MS = 11644473600000; // Milliseconds between FILETIME 0 and Unix Epoch 0
+    static const qint64 EPOCH_MIN_MS = static_cast<qint64>(QDateTime::YearRange::First) * 31556952000; // Years to MS
+    static const qint64 EPOCH_MAX_MS = std::numeric_limits<qint64>::max(); // The true max QDateTime can represent is above signed 64bit limit in ms
+
+//-Class Functions----------------------------------------------------------------------------------------------
+public:
+    static QDateTime fromMSFileTime(qint64 fileTime);
+};
+
+template <typename T, ENABLE_IF(std::is_integral<T>)>
+class FreeIndexTracker
+{
+//-Class Members-------------------------------------------------------------------------------------------------
+public:
+    static const int ABSOLUTE_MIN = 0;
+    static const int TYPE_MAX = -1;
+
+//-Instance Members----------------------------------------------------------------------------------------------
+private:
+    T mMinIndex;
+    T mMaxIndex;
+    QSet<T> mReservedIndicies;
+
+//-Constructor---------------------------------------------------------------------------------------------------
+public:
+    FreeIndexTracker(T minIndex = 0, T maxIndex = 0, QSet<T> reservedIndicies = QSet<T>()) : mMinIndex(minIndex), mMaxIndex(maxIndex), mReservedIndicies(reservedIndicies)
+    {
+        // Determine programatic limit if "type max" (-1) is specified
+        if(maxIndex < 0)
+            mMaxIndex = std::numeric_limits<T>::max();
+
+        // Insure initial values are valid
+        assert(mMinIndex >= 0 && mMinIndex <= mMaxIndex && (reservedIndicies.isEmpty() ||
+               (*std::min_element(reservedIndicies.begin(), reservedIndicies.end())) >= 0));
+
+        // Change bounds to match initial reserve list if they are mismatched
+        if(!reservedIndicies.isEmpty())
+        {
+            T minElement = *std::min_element(reservedIndicies.begin(), reservedIndicies.end());
+            if(minElement < minIndex)
+                mMinIndex = minElement;
+
+            T maxElement = *std::max_element(reservedIndicies.begin(), reservedIndicies.end());
+            if(maxElement > mMaxIndex)
+                mMaxIndex = maxElement;
+        }
+    }
+
+//-Instance Functions----------------------------------------------------------------------------------------------
+private:
+    int reserveInternal(int index)
+    {
+        // Check for valid index
+        assert(index == -1 || (index >= mMinIndex && index <= mMaxIndex));
+
+        int indexAffected = -1;
+
+        // Check if index is free and reserve if so
+        if(index != -1 && !mReservedIndicies.contains(index))
+        {
+            mReservedIndicies.insert(index);
+            indexAffected = index;
+        }
+
+        return indexAffected;
+    }
+
+    int releaseInternal(int index)
+    {
+        // Check for valid index
+        assert(index == -1 || (index >= mMinIndex && index <= mMaxIndex));
+
+        int indexAffected = -1;
+
+        // Check if index is reserved and free if so
+        if(index != -1 && mReservedIndicies.contains(index))
+        {
+            mReservedIndicies.remove(index);
+            indexAffected = index;
+        }
+
+        return indexAffected;
+    }
+
+public:
+    bool isReserved(T index) { return mReservedIndicies.contains(index); }
+    T minimum() { return mMinIndex; }
+    T maximum() { return mMaxIndex; }
+
+    T firstReserved()
+    {
+        if(!mReservedIndicies.isEmpty())
+            return (*std::min_element(mReservedIndicies.begin(), mReservedIndicies.end()));
+        else
+            return -1;
+    }
+
+    T lastReserved()
+    {
+        if(!mReservedIndicies.isEmpty())
+            return (*std::max_element(mReservedIndicies.begin(), mReservedIndicies.end()));
+        else
+            return -1;
+    }
+
+    T firstFree()
+    {
+        // Quick check for all reserved
+        if(mReservedIndicies.count() == rangeToLength(mMinIndex, mMaxIndex))
+            return -1;
+
+        // Full check for first available
+        for(int i = mMinIndex; i <= mMaxIndex; i++)
+            if(!mReservedIndicies.contains(i))
+                return i;
+
+        // Should never be reached, used to prevent warning (all control paths)
+        return -1;
+    }
+
+    T lastFree()
+    {
+        // Quick check for all reserved
+        if(mReservedIndicies.count() == rangeToLength(mMinIndex, mMaxIndex))
+            return -1;
+
+        // Full check for first available (backwards)
+        for(int i = mMaxIndex; i >= mMinIndex ; i--)
+            if(!mReservedIndicies.contains(i))
+                return i;
+
+        // Should never be reached, used to prevent warning (all control paths)
+        return -1;
+    }
+
+    bool reserve(int index)
+    {
+        // Check for valid index
+        assert(index >= mMinIndex && index <= mMaxIndex);
+
+        return reserveInternal(index) == index;
+    }
+
+    T reserveFirstFree() { return reserveInternal(firstFree()); }
+
+    T reserveLastFree() { return reserveInternal(lastFree()); }
+
+    bool release(int index)
+    {
+        // Check for valid index
+        assert(index >= mMinIndex && index <= mMaxIndex);
+
+        return releaseInternal(index) == index;
+    }
+
+};
+
+class GenericError
+{
+//-Class Enums-----------------------------------------------------------------------------------------------
+public:
+    enum ErrorLevel { Undefined, Warning, Error, Critical };
+
+//-Instance Members------------------------------------------------------------------------------------------
+private:
+    ErrorLevel mErrorLevel;
+    QString mCaption;
+    QString mPrimaryInfo;
+    QString mSecondaryInfo;
+    QString mDetailedInfo;
+
+//-Constructor----------------------------------------------------------------------------------------------
+public:
+    GenericError();
+    GenericError(ErrorLevel errorLevel, QString primaryInfo,
+                 QString secondaryInfo = QString(), QString detailedInfo = QString(), QString caption = QString());
+
+//-Instance Functions----------------------------------------------------------------------------------------------
+public:
+    bool isValid();
+    ErrorLevel errorLevel();
+    QString caption();
+    QString primaryInfo();
+    QString secondaryInfo();
+    QString detailedInfo();
+
+    void setErrorLevel(ErrorLevel errorLevel);
+
+    int exec(QMessageBox::StandardButtons choices);
+};
+
 class Integrity
 {
 //-Class Functions---------------------------------------------------------------------------------------------
@@ -275,8 +469,34 @@ public:
     static QByteArray generateChecksum(QByteArray &data, QCryptographicHash::Algorithm hashAlgorithm);
 };
 
-template <typename T, std::enable_if_t<std::is_arithmetic_v<T>, int>>
-//template <typename T>
+class Json
+{
+//-Class Members-------------------------------------------------------------------------------------------------
+public:
+    // Type names
+    static inline const QString JSON_TYPE_BOOL = "bool";
+    static inline const QString JSON_TYPE_DOUBLE = "double";
+    static inline const QString JSON_TYPE_STRING = "string";
+    static inline const QString JSON_TYPE_ARRAY = "array";
+    static inline const QString JSON_TYPE_OBJECT = "object";
+    static inline const QString JSON_TYPE_NULL = "null";
+
+private:
+    // Errors
+    static inline const QString ERR_RETRIEVING_VALUE = "JSON Error: Could not retrieve the %1 value from key '%2'.";
+    static inline const QString ERR_KEY_DOESNT_EXIST = "The key '%1' does not exist.";
+    static inline const QString ERR_KEY_TYPE_MISMATCH = "They key '%1' does not hold a %2 value.";
+
+//-Class Functions-----------------------------------------------------------------------------------------------
+public:
+    static Qx::GenericError checkedKeyRetrieval(bool& valueBuffer, QJsonObject jObject, QString key);
+    static Qx::GenericError checkedKeyRetrieval(double& valueBuffer, QJsonObject jObject, QString key);
+    static Qx::GenericError checkedKeyRetrieval(QString& valueBuffer, QJsonObject jObject, QString key);
+    static Qx::GenericError checkedKeyRetrieval(QJsonArray& valueBuffer, QJsonObject jObject, QString key);
+    static Qx::GenericError checkedKeyRetrieval(QJsonObject& valueBuffer, QJsonObject jObject, QString key);
+};
+
+template <typename T, ENABLE_IF2(std::is_arithmetic<T>)>
 class NII // Negative Is Infinity - Wrapper class (0 is minimum)
 {
 //-Class Members-------------------------------------------------------------------------------------------------
@@ -410,8 +630,9 @@ public:
 class MMRB
 {
 //-Class Variables---------------------------------------------------------------------------------------------
-private:
-    //static inline const QString MMRB_FORMAT = "%1.%2.%3.%4";
+public:
+    enum class StringFormat { Full, NoTrailZero, NoTrailRBZero };
+
 
 //-Member Variables--------------------------------------------------------------------------------------------
 private:
@@ -434,7 +655,7 @@ public:
     bool operator< (const MMRB &otherMMRB);
     bool operator<= (const MMRB &otherMMRB);
 
-    QString toString();
+    QString toString(StringFormat format = StringFormat::Full);
     int getMajorVer();
     int getMinorVer();
     int getRevisionVer();
@@ -445,6 +666,50 @@ private:
 //-Class Functions---------------------------------------------------------------------------------------------
 public:
     static MMRB fromString(QString string);
+};
+
+class Number
+{
+//-Class Functions---------------------------------------------------------------------------------------------
+public:
+    template <typename T>
+    static T typeLimitedAdd(T a, T b)
+    {
+        if(((b > 0) && (a > (std::numeric_limits<T>::max() - b))) ||
+           ((b < 0) && (a < (std::numeric_limits<T>::min() - b))))
+            return std::numeric_limits<T>::max();
+        else
+            return a + b;
+    }
+
+    template <typename T>
+    static T typeLimitedSub(T a, T b)
+    {
+        if((b > 0 && a < std::numeric_limits<T>::min() + b) ||
+           (b < 0 && a > std::numeric_limits<T>::max() + b))
+            return std::numeric_limits<T>::min();
+        else
+            return a - b;
+    }
+
+    template <typename T, ENABLE_IF(std::is_integral<T>)>
+    static T roundToNearestMultiple(T num, T mult)
+    {
+        // Ignore negative multiples
+        mult = std::abs(mult);
+
+        if(mult == 0)
+            return 0;
+
+        if(mult == 1)
+            return num;
+
+        T towardsZero = (num / mult) * mult;
+        T awayFromZero = num < 0 ? typeLimitedSub(towardsZero, mult) : typeLimitedAdd(towardsZero, mult);
+
+        // Return of closest the two directions
+        return (abs(num) - abs(towardsZero) >= abs(awayFromZero) - abs(num))? awayFromZero : towardsZero;
+    }
 };
 
 class RegEx
@@ -470,7 +735,26 @@ public:
     static QString fromByteArrayHex(QByteArray data);
     static QString fromByteArrayHex(QByteArray data, QChar separator, Endian::Endianness endianness);
     static QString stripToHexOnly(QString string);
+
+    template<typename T, typename F>
+    static QString join(QList<T> list, QString separator, F&& toStringFunc)
+    {
+        QString conjuction;
+
+        for(int i = 0; i < list.length(); i++)
+        {
+            conjuction += toStringFunc(list.at(i));
+            if(i < list.length() - 1)
+                conjuction += separator;
+        }
+
+        return conjuction;
+    }
 };
 
 }
+
+//-Metatype declarations-------------------------------------------------------------------------------------------
+Q_DECLARE_METATYPE(Qx::GenericError);
+
 #endif // QX_H

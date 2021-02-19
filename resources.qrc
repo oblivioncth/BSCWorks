@@ -12,10 +12,10 @@
         <file>res/Save_as.png</file>
         <file>res/Close.png</file>
         <file>res/Exit.png</file>
-        <file>res/Batch_SMF_to_WAV.png</file>
-        <file>res/Batch_WAV_to_SMF.png</file>
-        <file>res/Convert_SMF_to_WAV.png</file>
-        <file>res/Convert_WAV_to_SMF.png</file>
+        <file>res/Batch_SMF_to_WAV_MP3.png</file>
+        <file>res/Batch_WAV_MP3_to_SMF.png</file>
+        <file>res/Convert_SMF_to_WAV_MP3.png</file>
+        <file>res/Convert_WAV_MP3_to_SMF.png</file>
         <file>res/About.png</file>
         <file>res/New_Cache.png</file>
         <file>res/Update_Cash.png</file>

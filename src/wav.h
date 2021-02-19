@@ -2,11 +2,7 @@
 #define WAV_H
 
 #include <QFile>
-#include "smf.h"
 #include "qx-io.h"
-
-//-Related Class Forward Declarations----------------------------------------------------------------------------
-class SMF;
 
 class WAV
 {
@@ -26,20 +22,15 @@ private:
 
 //-Constructor-------------------------------------------------------------------------------------------------
 public:
-    WAV(QByteArray rawData);
-
-//-Class Functions------------------------------------------------------------------------------------------------------
-public:
-    static bool fileIsValidWAV(QFile& possibleWAV, Qx::IO::IOOpReport& reportBuffer);
-
-private:
+    WAV(QByteArray rawWAVData);
 
 //-Instance Functions---------------------------------------------------------------------------------------------------
-public:
-    QByteArray getFullData();
-    SMF toSMF();
-
 private:
+    bool fileIsValidWAV();
+
+public:
+    bool isValid();
+    QByteArray getFullData();
 };
 
 #endif // WAV_H

@@ -9,6 +9,7 @@
 #include <QProgressDialog>
 #include <QMimeData>
 #include <math.h>
+#include <stdexcept>
 
 //===============================================================================================================
 // MAIN WINDOW
@@ -660,7 +661,7 @@ bool MainWindow::saveChangesPrompt(bool exit)
 void MainWindow::openBSCFile(QFile& bscFile)
 {
     // Make sure file is valid
-    Qx::IO::IOOpReport openReport;
+    Qx::IOOpReport openReport;
     bool verDiff = false;
     bool fileIsValid = BSC::fileIsValidBSC(bscFile, openReport, verDiff);
 
@@ -679,7 +680,7 @@ void MainWindow::openBSCFile(QFile& bscFile)
             }
 
             QByteArray fullFile;
-            openReport = Qx::IO::readAllBytesFromFile(fullFile, bscFile);
+            openReport = Qx::readAllBytesFromFile(fullFile, bscFile);
 
             if(openReport.wasSuccessful())
             {
@@ -757,7 +758,7 @@ void MainWindow::cacheSubRoutine(bool existing)
         if(existing)
         {
             QByteArray cacheData;
-            Qx::IO::IOOpReport openReport = Qx::IO::readAllBytesFromFile(cacheData, cacheFile);
+            Qx::IOOpReport openReport = Qx::readAllBytesFromFile(cacheData, cacheFile);
 
             if(openReport.wasSuccessful())
                 cache = SMC(cacheData);
@@ -790,7 +791,8 @@ void MainWindow::cacheSubRoutine(bool existing)
                                                                QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes;
 
                 QStringList bscList;
-                Qx::IO::IOOpReport folderScanReport = Qx::IO::getDirFileList(bscList, scanFolderDir, includeSubFolders, {BSC::FILE_EXT});
+                Qx::IOOpReport folderScanReport = Qx::getDirFileList(bscList, scanFolderDir, {BSC::FILE_EXT},
+                                                                     includeSubFolders ? QDirIterator::Subdirectories : QDirIterator::NoIteratorFlags);
 
                 if(folderScanReport.wasSuccessful())
                 {
@@ -817,7 +819,7 @@ void MainWindow::cacheSubRoutine(bool existing)
                         if(!currentFileName.contains(' '))
                         {
                             QFile currentBSCFile(bscList.value(i));
-                            Qx::IO::IOOpReport currentOpenReport;
+                            Qx::IOOpReport currentOpenReport;
                             bool verDiff = false; // Check currently unused since user would have already seen the file was a different BSC version when opened
                             bool currentFileIsValid = BSC::fileIsValidBSC(currentBSCFile, currentOpenReport, verDiff);
 
@@ -848,7 +850,7 @@ void MainWindow::cacheSubRoutine(bool existing)
                     if(!aborted)
                     {
                         cache.deinterpretData();
-                        Qx::IO::IOOpReport writeReport = Qx::IO::writeBytesAsFile(cacheFile, cache.rebuildRawFile(), true);
+                        Qx::IOOpReport writeReport = Qx::writeBytesAsFile(cacheFile, cache.rebuildRawFile(), true);
 
                         QMessageBox cacheStatus;
                         cacheStatus.setStandardButtons(QMessageBox::Ok);
@@ -907,7 +909,7 @@ void MainWindow::cacheSubRoutine(bool existing)
     }
 }
 
-void MainWindow::execIOReport(Qx::IO::IOOpReport ioReport)
+void MainWindow::execIOReport(Qx::IOOpReport ioReport)
 {
     QMessageBox ioMessage;
     ioMessage.setStandardButtons(QMessageBox::Ok);
@@ -1027,7 +1029,7 @@ void MainWindow::all_on_menuAction_triggered()
         if(saveAsPath != "")
         {
             QFile saveAsFile(saveAsPath);
-            Qx::IO::IOOpReport saveReport = Qx::IO::writeBytesAsFile(saveAsFile, mBSCPtr->rebuildRawFile(), true);
+            Qx::IOOpReport saveReport = Qx::writeBytesAsFile(saveAsFile, mBSCPtr->rebuildRawFile(), true);
             if(saveReport.wasSuccessful())
             {
                 mCurrentFilePath = saveAsFile.fileName();
@@ -1055,7 +1057,7 @@ void MainWindow::all_on_menuAction_triggered()
         {
             QString savePath = mCurrentFilePath;
             QFile saveFile(savePath);
-            Qx::IO::IOOpReport saveReport = Qx::IO::writeBytesAsFile(saveFile, mBSCPtr->rebuildRawFile(), true);
+            Qx::IOOpReport saveReport = Qx::writeBytesAsFile(saveFile, mBSCPtr->rebuildRawFile(), true);
             if(saveReport.wasSuccessful())
             {
                 setChangesSavedState(true);
@@ -1151,46 +1153,38 @@ void MainWindow::all_on_menuAction_triggered()
     {
        cacheSubRoutine(true);
     }
-    else if(senderAction == ui->actionConvert_SMF_WAV)
+    else if(senderAction == ui->actionConvert_SMF_to_WAV_MP3)
     {
         QString smfPath = QFileDialog::getOpenFileName(this, MENU_CONV_SMF_IN_TITLE, QDir::currentPath(), MENU_SMF_FILE_FILTER);
 
         if(smfPath != "")
         {
             QFile smfFile(smfPath);
-            Qx::IO::IOOpReport openReport;
-            bool smfIsValid = SMF::fileIsValidSMF(smfFile, openReport);
+            QByteArray smfData;
+            Qx::IOOpReport openReport = Qx::readAllBytesFromFile(smfData, smfFile);
+            SMF smfIn(smfData);
 
             if(openReport.wasSuccessful())
             {
-                if(smfIsValid)
+                if(smfIn.isValid())
                 {
                     QString wavPath = QFileDialog::getSaveFileName(this, MENU_CONV_SMF_OUT_TITLE, QDir::currentPath(), MENU_WAV_FILE_FILTER);
 
                     if(wavPath != "")
                     {
-                        QByteArray smfData;
-                        Qx::IO::IOOpReport smfRead = Qx::IO::readAllBytesFromFile(smfData, smfFile);
+                        QFile wavFile(wavPath);
 
-                        if(smfRead.wasSuccessful())
+                        Qx::IOOpReport writeReport = Qx::writeBytesAsFile(wavFile, smfIn.toWAV().getFullData(), true);
+                        if(writeReport.wasSuccessful())
                         {
-                            SMF smfIn(smfData);
-                            QFile wavFile(wavPath);
-
-                            Qx::IO::IOOpReport writeReport = Qx::IO::writeBytesAsFile(wavFile, smfIn.toWAV().getFullData(), true);
-                            if(writeReport.wasSuccessful())
-                            {
-                                QApplication::beep();
-                                QMessageBox::information(this, QApplication::applicationName(), MSG_CONV_SMF_SUCCESS, QMessageBox::Ok, QMessageBox::Ok);
-                            }
-                            else
-                            {
-                                execIOReport(writeReport);
-                                QMessageBox::critical(this, QApplication::applicationName(), MSG_CONV_SMF_FAIL.arg(QDir::toNativeSeparators(wavPath)), QMessageBox::Ok, QMessageBox::Ok);
-                            }
+                            QApplication::beep();
+                            QMessageBox::information(this, QApplication::applicationName(), MSG_CONV_SMF_SUCCESS, QMessageBox::Ok, QMessageBox::Ok);
                         }
                         else
-                            execIOReport(smfRead);
+                        {
+                            execIOReport(writeReport);
+                            QMessageBox::critical(this, QApplication::applicationName(), MSG_CONV_SMF_FAIL.arg(QDir::toNativeSeparators(wavPath)), QMessageBox::Ok, QMessageBox::Ok);
+                        }
                     }
                 }
                 else
@@ -1200,43 +1194,35 @@ void MainWindow::all_on_menuAction_triggered()
                 execIOReport(openReport);
         }
     }
-    else if(senderAction == ui->actionConvert_WAV_SMF)
+    else if(senderAction == ui->actionConvert_WAV_MP3_to_SMF)
     {
         QString wavPath = QFileDialog::getOpenFileName(this, MENU_CONV_WAV_IN_TITLE, QDir::currentPath(), MENU_WAV_FILE_FILTER);
 
         if(wavPath != "")
         {
             QFile wavFile(wavPath);
-            Qx::IO::IOOpReport wavRead;
-            bool fileIsValid = WAV::fileIsValidWAV(wavFile, wavRead);
+            QByteArray wavData;
+            Qx::IOOpReport wavRead = Qx::readAllBytesFromFile(wavData, wavFile);
+            WAV wavIn(wavData);
 
             if(wavRead.wasSuccessful())
             {
-                if(fileIsValid)
+                if(wavIn.isValid())
                 {
                     QString smfPath = QFileDialog::getSaveFileName(this, MENU_CONV_WAV_OUT_TITLE, QDir::currentPath(), MENU_SMF_FILE_FILTER);
 
                     if(smfPath != "")
                     {
-                        QByteArray wavData;
-                        wavRead = Qx::IO::readAllBytesFromFile(wavData, wavFile);
+                        QFile smfFile(smfPath);
 
-                        if(wavRead.wasSuccessful())
-                        {
-                            WAV wavIn(wavData);
-                            QFile smfFile(smfPath);
-
-                            Qx::IO::IOOpReport writeReport = Qx::IO::writeBytesAsFile(smfFile, wavIn.toSMF().getFullData(), true);
-                            if(writeReport.wasSuccessful())
-                                QMessageBox::information(this, QApplication::applicationName(), MSG_CONV_WAV_SUCCESS, QMessageBox::Ok, QMessageBox::Ok);
-                            else
-                            {
-                                execIOReport(writeReport);
-                                QMessageBox::critical(this, QApplication::applicationName(), MSG_CONV_WAV_FAIL.arg(QDir::toNativeSeparators(wavPath)), QMessageBox::Ok, QMessageBox::Ok);
-                            }
-                        }
+                        Qx::IOOpReport writeReport = Qx::writeBytesAsFile(smfFile, SMF::fromStandard(wavIn).getFullData(), true);
+                        if(writeReport.wasSuccessful())
+                            QMessageBox::information(this, QApplication::applicationName(), MSG_CONV_WAV_SUCCESS, QMessageBox::Ok, QMessageBox::Ok);
                         else
-                            execIOReport(wavRead);
+                        {
+                            execIOReport(writeReport);
+                            QMessageBox::critical(this, QApplication::applicationName(), MSG_CONV_WAV_FAIL.arg(QDir::toNativeSeparators(wavPath)), QMessageBox::Ok, QMessageBox::Ok);
+                        }
                     }
                 }
                 else
@@ -1246,7 +1232,7 @@ void MainWindow::all_on_menuAction_triggered()
                 execIOReport(wavRead);
         }
     }
-    else if(senderAction == ui->actionBatch_SMF_WAV)
+    else if(senderAction == ui->actionBatch_SMF_to_WAV_MP3)
     {
         QString smfFolderPath = QFileDialog::getExistingDirectory(this, MENU_BATCH_SMF_IN_TITLE, QDir::currentPath());
 
@@ -1262,7 +1248,8 @@ void MainWindow::all_on_menuAction_triggered()
             {
                 QDir smfFolder(smfFolderPath);
                 QStringList smfList;
-                Qx::IO::IOOpReport dirRead = Qx::IO::getDirFileList(smfList, smfFolder, includeSubFolders, {SMF::FILE_EXT});
+                Qx::IOOpReport dirRead = Qx::getDirFileList(smfList, smfFolder, {SMF::FILE_EXT},
+                                                            includeSubFolders ? QDirIterator::Subdirectories : QDirIterator::NoIteratorFlags);
 
                 if(dirRead.wasSuccessful())
                 {
@@ -1290,56 +1277,45 @@ void MainWindow::all_on_menuAction_triggered()
                         }
 
                         QFile currentFile(smfList.value(i));
-                        Qx::IO::IOOpReport smfRead;
-                        bool fileIsValid = SMF::fileIsValidSMF(currentFile, smfRead);
+                        QByteArray smfData;
+                        Qx::IOOpReport smfRead = Qx::readAllBytesFromFile(smfData, currentFile);
+                        SMF currentSMF(smfData);
 
                         if(smfRead.wasSuccessful())
                         {
-                            if(fileIsValid)
+                            if(currentSMF.isValid())
                             {
-                                QByteArray smfData;
-                                smfRead = Qx::IO::readAllBytesFromFile(smfData, currentFile);
+                                QString wavOutPath = smfList.value(i).remove(smfFolderPath).prepend(wavFolderPath);
+                                wavOutPath = wavOutPath.left(wavOutPath.length() - 3).append(WAV::FILE_EXT);
+                                QFile wavOut(wavOutPath);
 
-                                if(smfRead.wasSuccessful())
+                                if(wavOut.exists() && QFileInfo(wavOut).isFile() && showOverwritePrompt)
                                 {
-                                    SMF currentSMF(smfData);
-                                    QString wavOutPath = smfList.value(i).remove(smfFolderPath).prepend(wavFolderPath);
-                                    wavOutPath = wavOutPath.left(wavOutPath.length() - 3).append(WAV::FILE_EXT);
-                                    QFile wavOut(wavOutPath);
+                                    int overwriteChoice = QMessageBox::question(this, QApplication::applicationName(), MSG_BATCH_ALL_FILE_EXST.arg(QDir::toNativeSeparators(wavOutPath)),
+                                                                                QMessageBox::Yes | QMessageBox::YesToAll | QMessageBox::No | QMessageBox::NoToAll, QMessageBox::No);
 
-                                    if(wavOut.exists() && QFileInfo(wavOut).isFile() && showOverwritePrompt)
+                                    switch(overwriteChoice)
                                     {
-                                        int overwriteChoice = QMessageBox::question(this, QApplication::applicationName(), MSG_BATCH_ALL_FILE_EXST.arg(QDir::toNativeSeparators(wavOutPath)),
-                                                                                    QMessageBox::Yes | QMessageBox::YesToAll | QMessageBox::No | QMessageBox::NoToAll, QMessageBox::No);
+                                        case QMessageBox::YesToAll:
+                                            showOverwritePrompt = false;
+                                            [[fallthrough]];
+                                        case QMessageBox::Yes:
+                                            overwriteExisting = true;
+                                        break;
 
-                                        switch(overwriteChoice)
-                                        {
-                                            case QMessageBox::YesToAll:
-                                                showOverwritePrompt = false;
-                                                [[fallthrough]];
-                                            case QMessageBox::Yes:
-                                                overwriteExisting = true;
-                                            break;
-
-                                            case QMessageBox::NoToAll:
-                                                showOverwritePrompt = false;
-                                                [[fallthrough]];
-                                            case QMessageBox::No:
-                                                overwriteExisting = false;
-                                        }
-                                    }
-
-                                    Qx::IO::IOOpReport writeReport = Qx::IO::writeBytesAsFile(wavOut, currentSMF.toWAV().getFullData(), overwriteExisting);
-                                    if(!writeReport.wasSuccessful())
-                                    {
-                                        failedConvList.append(smfList.value(i));
-                                        failedReasonList.append(writeReport.getOutcomeInfo());
+                                        case QMessageBox::NoToAll:
+                                            showOverwritePrompt = false;
+                                            [[fallthrough]];
+                                        case QMessageBox::No:
+                                            overwriteExisting = false;
                                     }
                                 }
-                                else
+
+                                Qx::IOOpReport writeReport = Qx::writeBytesAsFile(wavOut, currentSMF.toWAV().getFullData(), overwriteExisting);
+                                if(!writeReport.wasSuccessful())
                                 {
                                     failedConvList.append(smfList.value(i));
-                                    failedReasonList.append(smfRead.getOutcomeInfo());
+                                    failedReasonList.append(writeReport.getOutcomeInfo());
                                 }
                             }
                             else
@@ -1409,7 +1385,7 @@ void MainWindow::all_on_menuAction_triggered()
             }
         }
     }
-    else if(senderAction == ui->actionBatch_WAV_SMF)
+    else if(senderAction == ui->actionBatch_WAV_MP3_to_SMF)
     {
         QString wavFolderPath = QFileDialog::getExistingDirectory(this, MENU_BATCH_WAV_IN_TITLE, QDir::currentPath());
 
@@ -1425,7 +1401,8 @@ void MainWindow::all_on_menuAction_triggered()
             {
                 QDir wavFolder(wavFolderPath);
                 QStringList wavList;
-                Qx::IO::IOOpReport dirRead = Qx::IO::getDirFileList(wavList, wavFolder, includeSubFolders, {WAV::FILE_EXT});
+                Qx::IOOpReport dirRead = Qx::getDirFileList(wavList, wavFolder, {WAV::FILE_EXT},
+                                                            includeSubFolders ? QDirIterator::Subdirectories : QDirIterator::NoIteratorFlags);
 
                 if(dirRead.wasSuccessful())
                 {
@@ -1453,58 +1430,47 @@ void MainWindow::all_on_menuAction_triggered()
                         }
 
                         QFile currentFile(wavList.value(i));
-                        Qx::IO::IOOpReport wavRead;
-                        bool fileIsValid = WAV::fileIsValidWAV(currentFile, wavRead);
+                        QByteArray wavData;
+                        Qx::IOOpReport wavRead = Qx::readAllBytesFromFile(wavData, currentFile);
+                        WAV currentWAV(wavData);
 
                         if(wavRead.wasSuccessful())
                         {
-                            if(fileIsValid)
+                            if(currentWAV.isValid())
                             {
-                                QByteArray wavData;
-                                wavRead = Qx::IO::readAllBytesFromFile(wavData, currentFile);
+                                QString smfOutPath = wavList.value(i).remove(wavFolderPath).prepend(smfFolderPath);
+                                smfOutPath = smfOutPath.left(smfOutPath.length() - 3).append(SMF::FILE_EXT);
 
-                                if(wavRead.wasSuccessful())
+                                QFile smfOut(smfOutPath);
+
+                                if(smfOut.exists() && QFileInfo(smfOut).isFile() && showOverwritePrompt)
                                 {
-                                    WAV currentWAV(wavData);
-                                    QString smfOutPath = wavList.value(i).remove(wavFolderPath).prepend(smfFolderPath);
-                                    smfOutPath = smfOutPath.left(smfOutPath.length() - 3).append(SMF::FILE_EXT);
+                                    int overwriteChoice = QMessageBox::question(this, QApplication::applicationName(), MSG_BATCH_ALL_FILE_EXST.arg(QDir::toNativeSeparators(smfOutPath)),
+                                                                                QMessageBox::Yes | QMessageBox::YesToAll | QMessageBox::No | QMessageBox::NoToAll, QMessageBox::No);
 
-                                    QFile smfOut(smfOutPath);
-
-                                    if(smfOut.exists() && QFileInfo(smfOut).isFile() && showOverwritePrompt)
+                                    switch(overwriteChoice)
                                     {
-                                        int overwriteChoice = QMessageBox::question(this, QApplication::applicationName(), MSG_BATCH_ALL_FILE_EXST.arg(QDir::toNativeSeparators(smfOutPath)),
-                                                                                    QMessageBox::Yes | QMessageBox::YesToAll | QMessageBox::No | QMessageBox::NoToAll, QMessageBox::No);
+                                        case QMessageBox::YesToAll:
+                                            showOverwritePrompt = false;
+                                            [[fallthrough]];
+                                        case QMessageBox::Yes:
+                                            overwriteExisting = true;
+                                        break;
 
-                                        switch(overwriteChoice)
-                                        {
-                                            case QMessageBox::YesToAll:
-                                                showOverwritePrompt = false;
-                                                [[fallthrough]];
-                                            case QMessageBox::Yes:
-                                                overwriteExisting = true;
-                                            break;
-
-                                            case QMessageBox::NoToAll:
-                                                showOverwritePrompt = false;
-                                                [[fallthrough]];
-                                            case QMessageBox::No:
-                                                overwriteExisting = false;
-                                        }
-                                    }
-
-                                    Qx::IO::IOOpReport writeReport = Qx::IO::writeBytesAsFile(smfOut, currentWAV.toSMF().getFullData(), overwriteExisting);
-
-                                    if(!writeReport.wasSuccessful())
-                                    {
-                                        failedConvList.append(wavList.value(i));
-                                        failedReasonList.append(writeReport.getOutcomeInfo());
+                                        case QMessageBox::NoToAll:
+                                            showOverwritePrompt = false;
+                                            [[fallthrough]];
+                                        case QMessageBox::No:
+                                            overwriteExisting = false;
                                     }
                                 }
-                                else
+
+                                Qx::IOOpReport writeReport = Qx::writeBytesAsFile(smfOut, SMF::fromStandard(currentWAV).getFullData(), overwriteExisting);
+
+                                if(!writeReport.wasSuccessful())
                                 {
                                     failedConvList.append(wavList.value(i));
-                                    failedReasonList.append(wavRead.getOutcomeInfo());
+                                    failedReasonList.append(writeReport.getOutcomeInfo());
                                 }
                             }
                             else

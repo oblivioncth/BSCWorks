@@ -1,6 +1,6 @@
 IDI_ICON1               ICON    DISCARDABLE     "res/bscworks.ico"
 
-#include "include\Windows_c++17_compat.h"
+#include "Windows.h"
 #include "src\version.h"
 
 VS_VERSION_INFO VERSIONINFO

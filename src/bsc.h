@@ -60,7 +60,7 @@ public:
 
 //-Class Functions------------------------------------------------------------------------------------------------------
 public:
-    static bool fileIsValidBSC(QFile& possibleBSC, Qx::IO::IOOpReport& reportBuffer, bool& versionMismatch);
+    static bool fileIsValidBSC(QFile& possibleBSC, Qx::IOOpReport& reportBuffer, bool& versionMismatch);
 
 private:
 

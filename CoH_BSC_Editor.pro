@@ -29,14 +29,15 @@ SOURCES += \
     src/bsc.cpp \
     src/main.cpp \
     src/mainwindow.cpp \
+    src/mp3.cpp \
     src/smc.cpp \
     src/smf.cpp \
     src/wav.cpp
 
 HEADERS += \
-    resources.rc \
     src/bsc.h \
     src/mainwindow.h \
+    src/mp3.h \
     src/smc.h \
     src/smf.h \
     src/version.h \
@@ -55,13 +56,13 @@ RESOURCES += \
 
 RC_FILE = resources.rc
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/lib/ -lQx_static32_0-0-1-2_Qt_5-14-0
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/lib/ -lQx_static32_0-0-1-2_Qt_5-14-0d
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/lib/ -lQx_static32_0-0-2-14_Qt_5-15-0
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/lib/ -lQx_static32_0-0-2-14_Qt_5-15-0d
 
 INCLUDEPATH += $$PWD/include
 DEPENDPATH += $$PWD/include
 
-win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/lib/libQx_static32_0-0-1-2_Qt_5-14-0.a
-else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/lib/libQx_static32_0-0-1-2_Qt_5-14-0d.a
-else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/lib/Qx_static32_0-0-1-2_Qt_5-14-0.lib
-else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/lib/Qx_static32_0-0-1-2_Qt_5-14-0d.lib
+win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/lib/libQx_static32_0-0-2-14_Qt_5-15-0.a
+else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/lib/libQx_static32_0-0-2-14_Qt_5-15-0d.a
+else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/lib/Qx_static32_0-0-2-14_Qt_5-15-0.lib
+else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/lib/Qx_static32_0-0-2-14_Qt_5-15-0d.lib

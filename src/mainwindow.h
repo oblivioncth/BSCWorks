@@ -177,7 +177,7 @@ private:
     BSC::SoundContainer* getSelectedSoundContainer() const;
     void storeTreeItemExpandedStates() const;
     void cacheSubRoutine(bool existing);
-    void execIOReport(Qx::IO::IOOpReport ioReport);
+    void execIOReport(Qx::IOOpReport ioReport);
 
 //-Overrides----------------------------------------------------------------------------------------------------
 private:
