@@ -8,15 +8,17 @@
 
 //-Constructor------------------------------------------------------------------------------------------------
 //Public:
-WAV::WAV(QByteArray rawWAVData) : mFileDataF(rawWAVData)
+Wav::Wav() {}
+
+Wav::Wav(QByteArray rawWAVData) : mFileDataF(rawWAVData)
 {
-    if(!fileIsValidWAV())
+    if(!fileIsValidWav())
         mFileDataF = QByteArray();
 }
 
 //-Instance Functions------------------------------------------------------------------------------------------------
 //Private:
-bool WAV::fileIsValidWAV()
+bool Wav::fileIsValidWav()
 {
     // Get header region
     QByteArray headers = mFileDataF.left(0x0F);
@@ -32,6 +34,6 @@ bool WAV::fileIsValidWAV()
 }
 
 //Public:
-bool WAV::isValid() { return !mFileDataF.isNull(); }
-QByteArray WAV::getFullData() { return mFileDataF; }
+bool Wav::isValid() { return !mFileDataF.isNull(); }
+QByteArray Wav::getFullData() { return mFileDataF; }
 

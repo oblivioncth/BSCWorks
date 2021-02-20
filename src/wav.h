@@ -4,7 +4,7 @@
 #include <QFile>
 #include "qx-io.h"
 
-class WAV
+class Wav
 {
 //-Class Variables-----------------------------------------------------------------------------------------------
 public:
@@ -22,11 +22,12 @@ private:
 
 //-Constructor-------------------------------------------------------------------------------------------------
 public:
-    WAV(QByteArray rawWAVData);
+    Wav();
+    Wav(QByteArray rawWAVData);
 
 //-Instance Functions---------------------------------------------------------------------------------------------------
 private:
-    bool fileIsValidWAV();
+    bool fileIsValidWav();
 
 public:
     bool isValid();

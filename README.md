@@ -1,4 +1,3 @@
-
 # BSCWorks
 
 BSCWorks is a somewhat feature rich editor for the Burnt Sound Container format, version 14, that Company of Heroes uses and also provides several tools for handling related files. This editor is about a decade too late to be relevant, but was made to more easily edit sound related aspects of the game in the unreleased quality-of-life mod I develop in my spare time for use with a small group of friends/family that still play the original. I am sharing it here in the hopes that it could be useful the remnants of CoH modders or research purposes, such as a starting point for examining other versions of this format from other Relic Games (i.e. CoH 2, Dawn of War, Warhammer 40k, etc.), or if someone ever decides to make a source port of the original game (if we are lucky enough to ever get the source, instead of just a really random licensed iPad port >>) .
@@ -15,7 +14,7 @@ BSCWorks is a somewhat feature rich editor for the Burnt Sound Container format,
 	 - Sound Container settings
  - Mostly complete editing of Sound Containers including sound container order insertion/removal of new/existing Sound Containers
  - Basic editing of *uninterpreted* Effect Container data
- - Single and batch conversion of both SMF->WAV and WAV->SMF
+ - Single and batch conversion of both SMF->WAV/MP3 and WAV/MP3->SMF
  - Creation and updating of Speechmanager Caches that performs byte-level validity checking, avoids adding redundant entries and removes any existing duplicates from the cache
 
 ## Usage
@@ -63,7 +62,7 @@ There are still considerable unknowns regarding the BSC format that unfortunatel
  - [ ] Add support for window resizing/fullscreen
 
 ## Source
-This tool was written in C++ 17 along with Qt 5 and currently only targets Windows Vista and above; however, this tool can easily be ported to Linux with minimal changes, though to what end I am not sure since this is for a Windows game. The source includes an easy-to-use .pro file if you wish to build the application in Qt Creator and the available latest release was compiled in Qt Creator 4.12.0 using MSVC 2019 and a static compilation of Qt 5.14.0. Other than a C++ 17 capable compiler and Qt 5.14.x+ all files required to compile this software are included, with the exception of a standard make file.
+This tool was written in C++ 17 along with Qt 5 and currently only targets Windows Vista and above; however, this tool can easily be ported to Linux with minimal changes, though to what end I am not sure since this is for a Windows game. The source includes an easy-to-use .pro file if you wish to build the application in Qt Creator and the available latest release was compiled in Qt Creator 4.12.0 using MSVC 2019 and a static compilation of Qt 5.15.0. Other than a C++ 17 capable compiler and Qt 5.15.x+ all files required to compile this software are included, with the exception of a standard make file.
 
 All functions/variables under the "Qx" (QExtended) namespace belong to a small, personal library I maintain to always have access to frequently used functionality in my projects. A pre-compiled static version of this library is provided with the source for this tool. If anyone truly needs it, I can provide the source for this library as well.
 

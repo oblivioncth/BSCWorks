@@ -753,7 +753,7 @@ void MainWindow::cacheSubRoutine(bool existing)
     {
         QFile cacheFile(cachePath);
 
-        SMC cache = SMC();
+        Smc cache = Smc();
 
         if(existing)
         {
@@ -761,7 +761,7 @@ void MainWindow::cacheSubRoutine(bool existing)
             Qx::IOOpReport openReport = Qx::readAllBytesFromFile(cacheData, cacheFile);
 
             if(openReport.wasSuccessful())
-                cache = SMC(cacheData);
+                cache = Smc(cacheData);
             else
             {
                 execIOReport(openReport);
@@ -1162,19 +1162,20 @@ void MainWindow::all_on_menuAction_triggered()
             QFile smfFile(smfPath);
             QByteArray smfData;
             Qx::IOOpReport openReport = Qx::readAllBytesFromFile(smfData, smfFile);
-            SMF smfIn(smfData);
+            Smf smfIn(smfData);
 
             if(openReport.wasSuccessful())
             {
                 if(smfIn.isValid())
                 {
-                    QString wavPath = QFileDialog::getSaveFileName(this, MENU_CONV_SMF_OUT_TITLE, QDir::currentPath(), MENU_WAV_FILE_FILTER);
+                    QString outputPath = QFileDialog::getSaveFileName(this, smfIn.getType() == Smf::WAVE ? MENU_CONV_SMF_OUT_WAV_TITLE : MENU_BATCH_WAV_MP3_OUT_TITLE,
+                                                                      QDir::currentPath(), smfIn.getType() == Smf::WAVE ? MENU_WAV_FILE_FILTER : MENU_MP3_FILE_FILTER);
 
-                    if(wavPath != "")
+                    if(outputPath != "")
                     {
-                        QFile wavFile(wavPath);
+                        QFile outPutFile(outputPath);
 
-                        Qx::IOOpReport writeReport = Qx::writeBytesAsFile(wavFile, smfIn.toWAV().getFullData(), true);
+                        Qx::IOOpReport writeReport = Qx::writeBytesAsFile(outPutFile, smfIn.getType() == Smf::WAVE ? smfIn.toWav().getFullData() : smfIn.toMp3().getFullData(), true);
                         if(writeReport.wasSuccessful())
                         {
                             QApplication::beep();
@@ -1183,7 +1184,7 @@ void MainWindow::all_on_menuAction_triggered()
                         else
                         {
                             execIOReport(writeReport);
-                            QMessageBox::critical(this, QApplication::applicationName(), MSG_CONV_SMF_FAIL.arg(QDir::toNativeSeparators(wavPath)), QMessageBox::Ok, QMessageBox::Ok);
+                            QMessageBox::critical(this, QApplication::applicationName(), MSG_CONV_SMF_FAIL.arg(QDir::toNativeSeparators(outputPath)), QMessageBox::Ok, QMessageBox::Ok);
                         }
                     }
                 }
@@ -1196,40 +1197,45 @@ void MainWindow::all_on_menuAction_triggered()
     }
     else if(senderAction == ui->actionConvert_WAV_MP3_to_SMF)
     {
-        QString wavPath = QFileDialog::getOpenFileName(this, MENU_CONV_WAV_IN_TITLE, QDir::currentPath(), MENU_WAV_FILE_FILTER);
+        QString inputPath = QFileDialog::getOpenFileName(this, MENU_CONV_WAV_MP3_IN_TITLE, QDir::currentPath(), MENU_WAV_MP3_FILE_FILTER);
 
-        if(wavPath != "")
+        if(inputPath != "")
         {
-            QFile wavFile(wavPath);
-            QByteArray wavData;
-            Qx::IOOpReport wavRead = Qx::readAllBytesFromFile(wavData, wavFile);
-            WAV wavIn(wavData);
+            QFile inputFile(inputPath);
+            QByteArray inputData;
+            Qx::IOOpReport openReport = Qx::readAllBytesFromFile(inputData, inputFile);
 
-            if(wavRead.wasSuccessful())
+            if(openReport.wasSuccessful())
             {
-                if(wavIn.isValid())
+                Smf::Type inputType = QFileInfo(inputFile).suffix() == Wav::FILE_EXT ? Smf::WAVE : Smf::MP3;
+
+                Wav wavIn(inputData);
+                Mp3 mp3In(inputData);
+
+                if(wavIn.isValid() || mp3In.isValid())
                 {
-                    QString smfPath = QFileDialog::getSaveFileName(this, MENU_CONV_WAV_OUT_TITLE, QDir::currentPath(), MENU_SMF_FILE_FILTER);
+                    QString smfPath = QFileDialog::getSaveFileName(this, MENU_CONV_WAV_MP3_OUT_TITLE, QDir::currentPath(), MENU_SMF_FILE_FILTER);
 
                     if(smfPath != "")
                     {
                         QFile smfFile(smfPath);
 
-                        Qx::IOOpReport writeReport = Qx::writeBytesAsFile(smfFile, SMF::fromStandard(wavIn).getFullData(), true);
+                        Qx::IOOpReport writeReport = Qx::writeBytesAsFile(smfFile, wavIn.isValid() ? Smf::fromStandard(wavIn).getFullData() : Smf::fromStandard(mp3In).getFullData(), true);
                         if(writeReport.wasSuccessful())
-                            QMessageBox::information(this, QApplication::applicationName(), MSG_CONV_WAV_SUCCESS, QMessageBox::Ok, QMessageBox::Ok);
+                            QMessageBox::information(this, QApplication::applicationName(), MSG_CONV_WAV_MP3_SUCCESS, QMessageBox::Ok, QMessageBox::Ok);
                         else
                         {
                             execIOReport(writeReport);
-                            QMessageBox::critical(this, QApplication::applicationName(), MSG_CONV_WAV_FAIL.arg(QDir::toNativeSeparators(wavPath)), QMessageBox::Ok, QMessageBox::Ok);
+                            QMessageBox::critical(this, QApplication::applicationName(), MSG_CONV_WAV_MP3_FAIL.arg(QDir::toNativeSeparators(inputPath)), QMessageBox::Ok, QMessageBox::Ok);
                         }
                     }
                 }
                 else
-                    QMessageBox::critical(this, QApplication::applicationName(), MSG_CONV_WAV_INVALID.arg(QDir::toNativeSeparators(wavPath)), QMessageBox::Ok, QMessageBox::Ok);
+                    QMessageBox::critical(this, QApplication::applicationName(), (inputType == Smf::WAVE ? MSG_CONV_WAV_INVALID : MSG_CONV_MP3_INVALID).arg(QDir::toNativeSeparators(inputPath)),
+                                          QMessageBox::Ok, QMessageBox::Ok);
             }
             else
-                execIOReport(wavRead);
+                execIOReport(openReport);
         }
     }
     else if(senderAction == ui->actionBatch_SMF_to_WAV_MP3)
@@ -1242,13 +1248,13 @@ void MainWindow::all_on_menuAction_triggered()
                                                                                 MSG_BATCH_SMF_SUB_PROMPT,
                                                                                 QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes;
 
-            QString wavFolderPath = QFileDialog::getExistingDirectory(this, MENU_BATCH_SMF_OUT_TITLE, QDir::currentPath());
+            QString outputFolderPath = QFileDialog::getExistingDirectory(this, MENU_BATCH_SMF_OUT_TITLE, QDir::currentPath());
 
-            if(wavFolderPath != "")
+            if(outputFolderPath != "")
             {
                 QDir smfFolder(smfFolderPath);
                 QStringList smfList;
-                Qx::IOOpReport dirRead = Qx::getDirFileList(smfList, smfFolder, {SMF::FILE_EXT},
+                Qx::IOOpReport dirRead = Qx::getDirFileList(smfList, smfFolder, {Smf::FILE_EXT},
                                                             includeSubFolders ? QDirIterator::Subdirectories : QDirIterator::NoIteratorFlags);
 
                 if(dirRead.wasSuccessful())
@@ -1279,19 +1285,19 @@ void MainWindow::all_on_menuAction_triggered()
                         QFile currentFile(smfList.value(i));
                         QByteArray smfData;
                         Qx::IOOpReport smfRead = Qx::readAllBytesFromFile(smfData, currentFile);
-                        SMF currentSMF(smfData);
+                        Smf currentSMF(smfData);
 
                         if(smfRead.wasSuccessful())
                         {
                             if(currentSMF.isValid())
                             {
-                                QString wavOutPath = smfList.value(i).remove(smfFolderPath).prepend(wavFolderPath);
-                                wavOutPath = wavOutPath.left(wavOutPath.length() - 3).append(WAV::FILE_EXT);
-                                QFile wavOut(wavOutPath);
+                                QString outputPath = smfList.value(i).remove(smfFolderPath).prepend(outputFolderPath);
+                                outputPath = outputPath.left(outputPath.length() - 3).append(currentSMF.getType() == Smf::WAVE ? Wav::FILE_EXT : Mp3::FILE_EXT);
+                                QFile fileOut(outputPath);
 
-                                if(wavOut.exists() && QFileInfo(wavOut).isFile() && showOverwritePrompt)
+                                if(fileOut.exists() && QFileInfo(fileOut).isFile() && showOverwritePrompt)
                                 {
-                                    int overwriteChoice = QMessageBox::question(this, QApplication::applicationName(), MSG_BATCH_ALL_FILE_EXST.arg(QDir::toNativeSeparators(wavOutPath)),
+                                    int overwriteChoice = QMessageBox::question(this, QApplication::applicationName(), MSG_BATCH_ALL_FILE_EXST.arg(QDir::toNativeSeparators(outputPath)),
                                                                                 QMessageBox::Yes | QMessageBox::YesToAll | QMessageBox::No | QMessageBox::NoToAll, QMessageBox::No);
 
                                     switch(overwriteChoice)
@@ -1311,7 +1317,8 @@ void MainWindow::all_on_menuAction_triggered()
                                     }
                                 }
 
-                                Qx::IOOpReport writeReport = Qx::writeBytesAsFile(wavOut, currentSMF.toWAV().getFullData(), overwriteExisting);
+                                Qx::IOOpReport writeReport = Qx::writeBytesAsFile(fileOut, currentSMF.getType() == Smf::WAVE ? currentSMF.toWav().getFullData() :
+                                                                                                                               currentSMF.toMp3().getFullData(), overwriteExisting);
                                 if(!writeReport.wasSuccessful())
                                 {
                                     failedConvList.append(smfList.value(i));
@@ -1387,21 +1394,21 @@ void MainWindow::all_on_menuAction_triggered()
     }
     else if(senderAction == ui->actionBatch_WAV_MP3_to_SMF)
     {
-        QString wavFolderPath = QFileDialog::getExistingDirectory(this, MENU_BATCH_WAV_IN_TITLE, QDir::currentPath());
+        QString inputFolderPath = QFileDialog::getExistingDirectory(this, MENU_BATCH_WAV_MP3_IN_TITLE, QDir::currentPath());
 
-        if(wavFolderPath != "")
+        if(inputFolderPath != "")
         {
             bool includeSubFolders = QMessageBox::question(this, QApplication::applicationName(),
-                                                                                MSG_BATCH_WAV_SUB_PROMPT,
+                                                                                MSG_BATCH_WAV_MP3_SUB_PROMPT,
                                                                                 QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes;
 
-            QString smfFolderPath = QFileDialog::getExistingDirectory(this, MENU_BATCH_WAV_OUT_TITLE, QDir::currentPath());
+            QString smfFolderPath = QFileDialog::getExistingDirectory(this, MENU_BATCH_WAV_MP3_OUT_TITLE, QDir::currentPath());
 
-            if(wavFolderPath != "")
+            if(inputFolderPath != "")
             {
-                QDir wavFolder(wavFolderPath);
-                QStringList wavList;
-                Qx::IOOpReport dirRead = Qx::getDirFileList(wavList, wavFolder, {WAV::FILE_EXT},
+                QDir inputFolder(inputFolderPath);
+                QStringList inputList;
+                Qx::IOOpReport dirRead = Qx::getDirFileList(inputList, inputFolder, {Wav::FILE_EXT, Mp3::FILE_EXT},
                                                             includeSubFolders ? QDirIterator::Subdirectories : QDirIterator::NoIteratorFlags);
 
                 if(dirRead.wasSuccessful())
@@ -1415,10 +1422,10 @@ void MainWindow::all_on_menuAction_triggered()
 
                     int filesProcessed = 0;
 
-                    QProgressDialog conversionProgress(MSG_BATCH_WAV_IN_PROGRESS, MSG_BATCH_ALL_ABORT, 0, wavList.length(), this);
+                    QProgressDialog conversionProgress(MSG_BATCH_WAV_MP3_IN_PROGRESS, MSG_BATCH_ALL_ABORT, 0, inputList.length(), this);
                     conversionProgress.setWindowModality(Qt::WindowModal);
 
-                    for(int i = 0; i < wavList.length(); i++)
+                    for(int i = 0; i < inputList.length(); i++)
                     {
                         conversionProgress.setValue(i);
 
@@ -1429,17 +1436,19 @@ void MainWindow::all_on_menuAction_triggered()
                             break;
                         }
 
-                        QFile currentFile(wavList.value(i));
-                        QByteArray wavData;
-                        Qx::IOOpReport wavRead = Qx::readAllBytesFromFile(wavData, currentFile);
-                        WAV currentWAV(wavData);
+                        QFile currentFile(inputList.value(i));
+                        QByteArray inputData;
+                        Qx::IOOpReport openReport = Qx::readAllBytesFromFile(inputData, currentFile);
 
-                        if(wavRead.wasSuccessful())
-                        {
-                            if(currentWAV.isValid())
+                        if(openReport.wasSuccessful())
+                        {                            
+                            Wav currentWav(inputData);
+                            Mp3 currentMp3(inputData);
+
+                            if(currentWav.isValid() || currentMp3.isValid())
                             {
-                                QString smfOutPath = wavList.value(i).remove(wavFolderPath).prepend(smfFolderPath);
-                                smfOutPath = smfOutPath.left(smfOutPath.length() - 3).append(SMF::FILE_EXT);
+                                QString smfOutPath = inputList.value(i).remove(inputFolderPath).prepend(smfFolderPath);
+                                smfOutPath = smfOutPath.left(smfOutPath.length() - 3).append(Smf::FILE_EXT);
 
                                 QFile smfOut(smfOutPath);
 
@@ -1465,45 +1474,46 @@ void MainWindow::all_on_menuAction_triggered()
                                     }
                                 }
 
-                                Qx::IOOpReport writeReport = Qx::writeBytesAsFile(smfOut, SMF::fromStandard(currentWAV).getFullData(), overwriteExisting);
+                                Qx::IOOpReport writeReport = Qx::writeBytesAsFile(smfOut, currentWav.isValid() ? Smf::fromStandard(currentWav).getFullData() :
+                                                                                                                 Smf::fromStandard(currentMp3).getFullData(), overwriteExisting);
 
                                 if(!writeReport.wasSuccessful())
                                 {
-                                    failedConvList.append(wavList.value(i));
+                                    failedConvList.append(inputList.value(i));
                                     failedReasonList.append(writeReport.getOutcomeInfo());
                                 }
                             }
                             else
                             {
-                                failedConvList.append(wavList.value(i));
-                                failedReasonList.append(MSG_BATCH_WAV_INV_FILES_CAT_BAD);
+                                failedConvList.append(inputList.value(i));
+                                failedReasonList.append(MSG_BATCH_WAV_MP3_INV_FILES_CAT_BAD);
                             }
                         }
                         else
                         {
-                            failedConvList.append(wavList.value(i));
-                            failedReasonList.append(wavRead.getOutcomeInfo());
+                            failedConvList.append(inputList.value(i));
+                            failedReasonList.append(openReport.getOutcomeInfo());
                         }
                     }
-                    conversionProgress.setValue(wavList.length()); // Finish progress dialog
+                    conversionProgress.setValue(inputList.length()); // Finish progress dialog
 
                     QMessageBox batchResult;
                     batchResult.setIcon(QMessageBox::Information);
                     batchResult.setStandardButtons(QMessageBox::Ok);
                     batchResult.setDefaultButton(QMessageBox::Ok);
 
-                    if(wavList.isEmpty())
+                    if(inputList.isEmpty())
                     {
                         batchResult.setIcon(QMessageBox::Critical);
-                        batchResult.setText(MSG_BATCH_WAV_NO_FILES.arg(QDir::toNativeSeparators(wavFolderPath)));
+                        batchResult.setText(MSG_BATCH_WAV_MP3_NO_FILES.arg(QDir::toNativeSeparators(inputFolderPath)));
                     }
-                    else if(wavList.length() == failedConvList.length())
+                    else if(inputList.length() == failedConvList.length())
                     {
                         batchResult.setIcon(QMessageBox::Critical);
-                        batchResult.setText(MSG_BATCH_WAV_NO_VALID_FILES_TXT.arg(QDir::toNativeSeparators(wavFolderPath)));
-                        batchResult.setInformativeText(MSG_BATCH_WAV_NO_VALID_FILES_INFO);
+                        batchResult.setText(MSG_BATCH_WAV_MP3_NO_VALID_FILES_TXT.arg(QDir::toNativeSeparators(inputFolderPath)));
+                        batchResult.setInformativeText(MSG_BATCH_WAV_MP3_NO_VALID_FILES_INFO);
 
-                        QString details = MSG_BATCH_WAV_INV_FILES_DETAILS + "\n";
+                        QString details = MSG_BATCH_WAV_MP3_INV_FILES_DETAILS + "\n";
 
                         for(int i = 0; i < failedConvList.length(); i ++)
                             details.append("\n- " + failedConvList.value(i) + " " + failedReasonList.value(i));
@@ -1514,15 +1524,15 @@ void MainWindow::all_on_menuAction_triggered()
                     {
                         batchResult.setIcon(QMessageBox::Warning);
                         batchResult.setText(MSG_BATCH_ALL_ABORTED_TXT);
-                        batchResult.setInformativeText(MSG_BATCH_ALL_ABORTED_INFO.arg(filesProcessed).arg(wavList.length()));
+                        batchResult.setInformativeText(MSG_BATCH_ALL_ABORTED_INFO.arg(filesProcessed).arg(inputList.length()));
                     }
                     else if(!failedConvList.isEmpty())
                     {
                         batchResult.setIcon(QMessageBox::Warning);
-                        batchResult.setText(MSG_BATCH_WAV_SUCCESS_TXT);
-                        batchResult.setInformativeText(MSG_BATCH_WAV_INV_FILES_INFO);
+                        batchResult.setText(MSG_BATCH_WAV_MP3_SUCCESS_TXT);
+                        batchResult.setInformativeText(MSG_BATCH_WAV_MP3_INV_FILES_INFO);
 
-                        QString details = MSG_BATCH_WAV_INV_FILES_DETAILS + "\n";
+                        QString details = MSG_BATCH_WAV_MP3_INV_FILES_DETAILS + "\n";
 
                         for(int i = 0; i < failedConvList.length(); i ++)
                             details.append("\n- " + failedConvList.value(i) + " " + failedReasonList.value(i));
@@ -1530,7 +1540,7 @@ void MainWindow::all_on_menuAction_triggered()
                         batchResult.setDetailedText(details);
                     }
                     else
-                        batchResult.setText(MSG_BATCH_WAV_SUCCESS_TXT);
+                        batchResult.setText(MSG_BATCH_WAV_MP3_SUCCESS_TXT);
 
                     QApplication::beep();
                     batchResult.exec();

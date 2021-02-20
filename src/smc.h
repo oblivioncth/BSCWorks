@@ -4,7 +4,7 @@
 #include <QByteArray>
 #include <QByteArrayList>
 
-class SMC
+class Smc
 {
 //-Class Variables-----------------------------------------------------------------------------------------------
 public:
@@ -34,8 +34,8 @@ private:
 
 //-Constructor-------------------------------------------------------------------------------------------------
 public:
-    SMC(QByteArray rawData);
-    SMC();
+    Smc(QByteArray rawData);
+    Smc();
 
 //-Class Functions------------------------------------------------------------------------------------------------------
 public:

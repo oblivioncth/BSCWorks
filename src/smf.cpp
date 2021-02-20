@@ -9,19 +9,19 @@
 
 //-Constructor------------------------------------------------------------------------------------------------
 //Public:
-SMF::SMF(QByteArray rawData) : mFileDataF(rawData)
+Smf::Smf(QByteArray rawData) : mFileDataF(rawData)
 {
     if(!fileIsValidSMF())
         mFileDataF = QByteArray();
 }
 
 //-Class Functions---------------------------------------------------------------------------------------------------
-SMF SMF::fromStandard(WAV wavData) { return addSMFHeader(wavData.getFullData()); }
-SMF SMF::fromStandard(MP3 mp3Data) { return addSMFHeader(mp3Data.getFullData()); }
+Smf Smf::fromStandard(Wav wavData) { return addSMFHeader(wavData.getFullData()); }
+Smf Smf::fromStandard(Mp3 mp3Data) { return addSMFHeader(mp3Data.getFullData()); }
 
 //-Instance Functions------------------------------------------------------------------------------------------------
 //Private:
-bool SMF::fileIsValidSMF()
+bool Smf::fileIsValidSMF()
 {
     // Get header region
     QByteArray headers = mFileDataF.left(0x1B);
@@ -34,14 +34,14 @@ bool SMF::fileIsValidSMF()
     if(smfSigRegion == SMF_SIG)
     {
         // WAV Check
-        if(toWAV().isValid())
+        if(toWav().isValid())
         {
-            mType = Wav;
+            mType = WAVE;
             return true;
         }
-        else if(toMP3().isValid()) // MP3 Check
+        else if(toMp3().isValid()) // MP3 Check
         {
-            mType = Mp3;
+            mType = MP3;
             return true;
         }
     }
@@ -50,14 +50,15 @@ bool SMF::fileIsValidSMF()
     return false;
 }
 
-QByteArray SMF::addSMFHeader(const QByteArray& fileData)
+QByteArray Smf::addSMFHeader(const QByteArray& fileData)
 {
-    return Qx::ByteArray::RAWFromString(SMF::SMF_SIG) + QByteArray(SMF::SMF_CMN_FLAGS, 8) + fileData;
+    return Qx::ByteArray::RAWFromString(Smf::SMF_SIG) + QByteArray(Smf::SMF_CMN_FLAGS, 8) + fileData;
 }
 
 //Public:
-bool SMF::isValid() { return !mFileDataF.isNull(); }
-QByteArray SMF::getFullData() { return mFileDataF; }
-WAV SMF::toWAV() { return WAV(mFileDataF.mid(L_SMF_SIG + L_SMF_CMN_FLAGS)); } // Uses unknown flag values that seem to be common to a huge majority of SMFs
-MP3 SMF::toMP3() { return MP3(mFileDataF.mid(L_SMF_SIG + L_SMF_CMN_FLAGS)); } // Uses unknown flag values that seem to be common to a huge majority of SMFs
+bool Smf::isValid() { return !mFileDataF.isNull(); }
+Smf::Type Smf::getType() { return mType; }
+QByteArray Smf::getFullData() { return mFileDataF; }
+Wav Smf::toWav() { return Wav(mFileDataF.mid(L_SMF_SIG + L_SMF_CMN_FLAGS)); } // Uses unknown flag values that seem to be common to a huge majority of SMFs
+Mp3 Smf::toMp3() { return Mp3(mFileDataF.mid(L_SMF_SIG + L_SMF_CMN_FLAGS)); } // Uses unknown flag values that seem to be common to a huge majority of SMFs
 

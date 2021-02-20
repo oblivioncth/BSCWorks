@@ -9,7 +9,7 @@
 //-Constructor------------------------------------------------------------------------------------------------
 //Public:
 
-SMC::SMC(QByteArray rawData)
+Smc::Smc(QByteArray rawData)
     : mFileDataF(rawData)
 {
     mValidFile = separateData();
@@ -17,18 +17,18 @@ SMC::SMC(QByteArray rawData)
         interpretData();
 }
 
-SMC::SMC()
+Smc::Smc()
 {
     mValidFile = true;
 }
 
 //-Instance Functions------------------------------------------------------------------------------------------------
 //Public:
-QStringList& SMC::getInterpretedCacheListR() { return mCacheListI; }
-QStringList SMC::getInterpretedCacheListV() { return mCacheListI; }
-bool SMC::isValidCache() { return mValidFile; }
+QStringList& Smc::getInterpretedCacheListR() { return mCacheListI; }
+QStringList Smc::getInterpretedCacheListV() { return mCacheListI; }
+bool Smc::isValidCache() { return mValidFile; }
 
-void SMC::deinterpretData()
+void Smc::deinterpretData()
 {
     mCacheListR.clear();
 
@@ -36,7 +36,7 @@ void SMC::deinterpretData()
         mCacheListR.append(Qx::ByteArray::RAWFromString(mCacheListI.value(i)));
 }
 
-QByteArray SMC::rebuildRawFile()
+QByteArray Smc::rebuildRawFile()
 {
     QByteArray rawFile;
 
@@ -51,7 +51,7 @@ QByteArray SMC::rebuildRawFile()
 }
 
 //Private:
-bool SMC::separateData()
+bool Smc::separateData()
 {
     bool fileIsValid = true;
     mDataCursor = 0x00; // Start of data
@@ -80,13 +80,13 @@ bool SMC::separateData()
     return true;
 }
 
-void SMC::interpretData()
+void Smc::interpretData()
 {
     for (int i = 0; i< mCacheListR.length(); i++)
         mCacheListI.append(Qx::String::fromByteArrayDirectly(mCacheListR.value(i)));
 }
 
-bool SMC::rawEntryIsValid(QByteArray entry)
+bool Smc::rawEntryIsValid(QByteArray entry)
 {
     for(int i = 0; i < entry.length(); i++)
     {

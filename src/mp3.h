@@ -4,7 +4,7 @@
 #include "qx.h"
 #include "qx-io.h"
 
-class MP3
+class Mp3
 {
 //-Class Variables-----------------------------------------------------------------------------------------------
 public:
@@ -13,8 +13,8 @@ public:
     static inline const QByteArray MP3_OLD_SIG_2 = Qx::ByteArray::RAWFromStringHex("FFF3");
     static inline const QByteArray MP3_OLD_SIG_3 = Qx::ByteArray::RAWFromStringHex("FFF2");
     static inline const QByteArray MP3_NEW_SIG = Qx::ByteArray::RAWFromStringHex("494433");
-    static const int L_MP3_OLD_SIG = 0x03;
-    static const int L_MP3_NEW_SIG = 0x04;
+    static const int L_MP3_OLD_SIG = 0x02;
+    static const int L_MP3_NEW_SIG = 0x03;
 
     //-Instance Variables--------------------------------------------------------------------------------------------
     private:
@@ -22,11 +22,12 @@ public:
 
     //-Constructor-------------------------------------------------------------------------------------------------
     public:
-        MP3(QByteArray rawMP3Data);
+        Mp3();
+        Mp3(QByteArray rawMP3Data);
 
     //-Instance Functions---------------------------------------------------------------------------------------------------
     private:
-        bool fileIsValidMP3();
+        bool fileIsValidMp3();
 
     public:
         bool isValid();

@@ -4,7 +4,6 @@
 #include "bsc.h"
 #include "smc.h"
 #include "smf.h"
-#include "wav.h"
 
 #include <QMainWindow>
 #include <QTreeWidget>
@@ -41,7 +40,7 @@ private:
                                                         "BSC inoperable if performed incorrectly. Only edit this section if you know what you're doing.";
     static inline const QString MSG_EFF_CON_EDIT_WARN_INFO_TXT = "Effect Container count must be 1 or greater before any data can be changed.";
 
-    static inline const QString MENU_CACHE_FILE_FILTER = "Speechmanager Cache (*." + SMC::FILE_EXT + ")";
+    static inline const QString MENU_CACHE_FILE_FILTER = "Speechmanager Cache (*." + Smc::FILE_EXT + ")";
     static inline const QString MENU_CACHE_OPEN_TITLE = "Select Speechmanager Cache";
     static inline const QString MENU_CACHE_FOLDER_TITLE = "Select folder to scan for BSC files";
     static inline const QString MSG_CACHE_INVALID = """%1"" is not a valid Speechmanager Cache!";
@@ -64,20 +63,24 @@ private:
     static inline const QString MSG_CACHE_SCAN_ABORT = "Abort";
     static inline const QString MSG_CACHE_SCAN_ABORTED = "Speechmanager cache update aborted by user.";
 
-    static inline const QString MENU_SMF_FILE_FILTER = "SMF Audio (*." + SMF::FILE_EXT + ")";
-    static inline const QString MENU_WAV_FILE_FILTER = "WAVE Audio (*." + WAV::FILE_EXT + ")";
+    static inline const QString MENU_SMF_FILE_FILTER = "SMF Audio (*." + Smf::FILE_EXT + ")";
+    static inline const QString MENU_WAV_FILE_FILTER = "WAVE Audio (*." + Wav::FILE_EXT + ")";
+    static inline const QString MENU_MP3_FILE_FILTER = "MP3 Audio (*." + Mp3::FILE_EXT + ")";
+    static inline const QString MENU_WAV_MP3_FILE_FILTER = "WAVE/MP3 Audio (*." + Wav::FILE_EXT + ", *." + Mp3::FILE_EXT + ")";
 
     static inline const QString MENU_CONV_SMF_IN_TITLE = "Select SMF to convert";
-    static inline const QString MENU_CONV_SMF_OUT_TITLE = "Enter output WAV destination";
+    static inline const QString MENU_CONV_SMF_OUT_WAV_TITLE = "Enter output WAV destination";
+    static inline const QString MENU_CONV_SMF_OUT_MP3_TITLE = "Enter output MP3 destination";
     static inline const QString MSG_CONV_SMF_INVALID = """%1"" is not a valid SMF file!";
     static inline const QString MSG_CONV_SMF_SUCCESS = "Conversion completed successfully.";
     static inline const QString MSG_CONV_SMF_FAIL = "Error writting ""%1""";
 
-    static inline const QString MENU_CONV_WAV_IN_TITLE = "Select WAV to convert";
-    static inline const QString MENU_CONV_WAV_OUT_TITLE = "Enter output SMF destination";
+    static inline const QString MENU_CONV_WAV_MP3_IN_TITLE = "Select WAV/MP3 to convert";
+    static inline const QString MENU_CONV_WAV_MP3_OUT_TITLE = "Enter output SMF destination";
     static inline const QString MSG_CONV_WAV_INVALID = """%1"" is not a valid WAVE file!";
-    static inline const QString MSG_CONV_WAV_SUCCESS = "Conversion completed successfully.";
-    static inline const QString MSG_CONV_WAV_FAIL = "Error writting ""%1""";
+    static inline const QString MSG_CONV_MP3_INVALID = """%1"" is not a valid MP3 file!";
+    static inline const QString MSG_CONV_WAV_MP3_SUCCESS = "Conversion completed successfully.";
+    static inline const QString MSG_CONV_WAV_MP3_FAIL = "Error writting ""%1""";
 
     static inline const QString MSG_BATCH_ALL_FILE_EXST = """%1"" already exists. Do you want to overwrite this file?";
     static inline const QString MSG_BATCH_ALL_ABORT = "Abort Conversion";
@@ -94,19 +97,19 @@ private:
     static inline const QString MSG_BATCH_SMF_INV_FILES_INFO = "Some files were skipped due to read/write issues. See details below";
     static inline const QString MSG_BATCH_SMF_INV_FILES_DETAILS  = "The following files were skipped:";
     static inline const QString MSG_BATCH_SMF_INV_FILES_CAT_BAD = "(Invalid data)";
-    static inline const QString MSG_BATCH_SMF_IN_PROGRESS = "Converting SMF files to WAV...";
+    static inline const QString MSG_BATCH_SMF_IN_PROGRESS = "Converting SMF files to WAV/MP3...";
 
-    static inline const QString MENU_BATCH_WAV_IN_TITLE = "Select folder to scan for WAV files";
-    static inline const QString MENU_BATCH_WAV_OUT_TITLE = "Select output folder";
-    static inline const QString MSG_BATCH_WAV_SUB_PROMPT = "Include sub-directories?";
-    static inline const QString MSG_BATCH_WAV_NO_FILES = "No WAV files found in %1";
-    static inline const QString MSG_BATCH_WAV_NO_VALID_FILES_TXT = "No valid/convertable WAV files found in %1";
-    static inline const QString MSG_BATCH_WAV_NO_VALID_FILES_INFO = "All present WAV files are corrupt, or experienced IO errors during conversion!";
-    static inline const QString MSG_BATCH_WAV_SUCCESS_TXT = "Batch WAV conversion completed successfully.";
-    static inline const QString MSG_BATCH_WAV_INV_FILES_INFO = "Some files were skipped due to read/write issues. See details below";
-    static inline const QString MSG_BATCH_WAV_INV_FILES_DETAILS = "The following files were skipped:";
-    static inline const QString MSG_BATCH_WAV_INV_FILES_CAT_BAD = "(Invalid data)";
-    static inline const QString MSG_BATCH_WAV_IN_PROGRESS = "Converting WAV files to SMF...";
+    static inline const QString MENU_BATCH_WAV_MP3_IN_TITLE = "Select folder to scan for WAV/MP3 files";
+    static inline const QString MENU_BATCH_WAV_MP3_OUT_TITLE = "Select output folder";
+    static inline const QString MSG_BATCH_WAV_MP3_SUB_PROMPT = "Include sub-directories?";
+    static inline const QString MSG_BATCH_WAV_MP3_NO_FILES = "No WAV/MP3 files found in %1";
+    static inline const QString MSG_BATCH_WAV_MP3_NO_VALID_FILES_TXT = "No valid/convertable WAV/MP3 files found in %1";
+    static inline const QString MSG_BATCH_WAV_MP3_NO_VALID_FILES_INFO = "All present WAV/MP3 files are corrupt, or experienced IO errors during conversion!";
+    static inline const QString MSG_BATCH_WAV_MP3_SUCCESS_TXT = "Batch WAV/MP3 conversion completed successfully.";
+    static inline const QString MSG_BATCH_WAV_MP3_INV_FILES_INFO = "Some files were skipped due to read/write issues. See details below";
+    static inline const QString MSG_BATCH_WAV_MP3_INV_FILES_DETAILS = "The following files were skipped:";
+    static inline const QString MSG_BATCH_WAV_MP3_INV_FILES_CAT_BAD = "(Invalid data)";
+    static inline const QString MSG_BATCH_WAV_MP3_IN_PROGRESS = "Converting WAV/MP3 files to SMF...";
 
     static inline const QString MSG_ABOUT_TXT = "BSCWorks " + QString::fromStdString(VER_PRODUCTVERSION_STR) + " @oblivioncth";
     static inline const QString MSG_ABOUT_INFO_TXT = "Distrubted under the GNU General Public License V3.0. See " + QString::fromStdString(VER_COMPANYDOMAIN_STR) + "/BSCWorks for more information.";

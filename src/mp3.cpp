@@ -8,18 +8,20 @@
 
 //-Constructor------------------------------------------------------------------------------------------------
 //Public:
-MP3::MP3(QByteArray rawMP3Data) : mFileDataF(rawMP3Data)
+Mp3::Mp3() {}
+
+Mp3::Mp3(QByteArray rawMP3Data) : mFileDataF(rawMP3Data)
 {
-    if(!fileIsValidMP3())
+    if(!fileIsValidMp3())
         mFileDataF = QByteArray();
 }
 
 //-Instance Functions------------------------------------------------------------------------------------------------
 //Private:
-bool MP3::fileIsValidMP3()
+bool Mp3::fileIsValidMp3()
 {
     // Get header region
-    QByteArray header = mFileDataF.left(0x04);
+    QByteArray header = mFileDataF.left(0x03);
 
     QByteArray mp3OldSigRegion = header.left(L_MP3_OLD_SIG);
     QByteArray mp3NewSigRegion = header;
@@ -29,5 +31,5 @@ bool MP3::fileIsValidMP3()
 }
 
 //Public:
-bool MP3::isValid() { return !mFileDataF.isNull(); }
-QByteArray MP3::getFullData() { return mFileDataF; }
+bool Mp3::isValid() { return !mFileDataF.isNull(); }
+QByteArray Mp3::getFullData() { return mFileDataF; }

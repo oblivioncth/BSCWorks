@@ -6,11 +6,11 @@
 #include "mp3.h"
 #include "qx-io.h"
 
-class SMF
+class Smf
 {
 //-Class Enums---------------------------------------------------------------------------------------------------
 public:
-    enum Type {Wav, Mp3};
+    enum Type {WAVE, MP3};
 
 //-Class Variables-----------------------------------------------------------------------------------------------
 public:
@@ -33,15 +33,15 @@ private:
 
 //-Constructor-------------------------------------------------------------------------------------------------
 public:
-    SMF(QByteArray rawSMFData);
+    Smf(QByteArray rawSMFData);
 
 //-Class Functions-------------------------------------------------------------------------------------------------------
 private:
     static QByteArray addSMFHeader(const QByteArray& fileData);
 
 public:
-    static SMF fromStandard(WAV wavData);
-    static SMF fromStandard(MP3 mp3Data);
+    static Smf fromStandard(Wav wavData);
+    static Smf fromStandard(Mp3 mp3Data);
 
 //-Instance Functions---------------------------------------------------------------------------------------------------
 private:
@@ -49,9 +49,10 @@ private:
 
 public:
     bool isValid();
+    Type getType();
     QByteArray getFullData();
-    WAV toWAV();
-    MP3 toMP3();
+    Wav toWav();
+    Mp3 toMp3();
 };
 
 #endif // SMF_H
