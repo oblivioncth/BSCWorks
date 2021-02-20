@@ -17,13 +17,14 @@ public:
     static inline const QString FILE_EXT = "smf";
     static inline const QString SMF_SIG = "fssm";
 
-
-    static inline const char SMF_CMN_FLAGS[] = {0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00};  //This appears to actually be two back-to-back,
-    // 32-bit, little-endian values of 1 that may be some kind of count. A few older looking BSCs use 1,0 instead, perhaps its a version tag? Initialized
-    // using char[] because QByteArray seems to be bugged when using "inline" with null (0x00) characters as part of the array
+    static inline const uint32_t MAJ_VER_STD = 1;
+    static inline const uint32_t MIN_VER_STD_PROTO_WAV = 0; // Seems to be in unused/really old SMFs, unused in this app for now
+    static inline const uint32_t MIN_VER_STD_WAV = 1;
+    static inline const uint32_t MIN_VER_STD_MP3 = 2;
 
     static const int L_SMF_SIG = 0x04;
-    static const int L_SMF_CMN_FLAGS = 0x08;
+    static const int L_SMF_MAJ_VER = 0x04;
+    static const int L_SMF_MIN_VER = 0x04;
 
 //-Instance Variables--------------------------------------------------------------------------------------------
 private:
@@ -36,9 +37,6 @@ public:
     Smf(QByteArray rawSMFData);
 
 //-Class Functions-------------------------------------------------------------------------------------------------------
-private:
-    static QByteArray addSMFHeader(const QByteArray& fileData);
-
 public:
     static Smf fromStandard(Wav wavData);
     static Smf fromStandard(Mp3 mp3Data);

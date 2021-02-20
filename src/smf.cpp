@@ -16,8 +16,22 @@ Smf::Smf(QByteArray rawData) : mFileDataF(rawData)
 }
 
 //-Class Functions---------------------------------------------------------------------------------------------------
-Smf Smf::fromStandard(Wav wavData) { return addSMFHeader(wavData.getFullData()); }
-Smf Smf::fromStandard(Mp3 mp3Data) { return addSMFHeader(mp3Data.getFullData()); }
+Smf Smf::fromStandard(Wav wavData)
+{
+    QByteArray sig = Qx::ByteArray::RAWFromString(SMF_SIG);
+    QByteArray maj = Qx::ByteArray::RAWFromPrimitive(MAJ_VER_STD);
+    QByteArray min = Qx::ByteArray::RAWFromPrimitive(MIN_VER_STD_WAV);
+
+    return Smf(sig + maj + min + wavData.getFullData());
+}
+Smf Smf::fromStandard(Mp3 mp3Data)
+{
+    QByteArray sig = Qx::ByteArray::RAWFromString(SMF_SIG);
+    QByteArray maj = Qx::ByteArray::RAWFromPrimitive(MAJ_VER_STD);
+    QByteArray min = Qx::ByteArray::RAWFromPrimitive(MIN_VER_STD_MP3);
+
+    return Smf(sig + maj + min + mp3Data.getFullData());
+}
 
 //-Instance Functions------------------------------------------------------------------------------------------------
 //Private:
@@ -28,18 +42,18 @@ bool Smf::fileIsValidSMF()
 
     // General
     QByteArray smfSigRegion = headers.left(L_SMF_SIG);
-    QByteArray unkFlagOne = headers.mid(L_SMF_SIG, L_SMF_CMN_FLAGS/2); // Not understood so unused
-    QByteArray unkFlagTwo = headers.mid(L_SMF_SIG + L_SMF_CMN_FLAGS/2, L_SMF_CMN_FLAGS/2); // Not understood so unused
+    uint32_t majorVersion = Qx::ByteArray::RAWToPrimitive<uint32_t>(headers.mid(L_SMF_SIG, L_SMF_MAJ_VER)); // So far haven't seen SMF with non-1 here so unused
+    uint32_t minorVersion = Qx::ByteArray::RAWToPrimitive<uint32_t>(headers.mid(L_SMF_SIG + L_SMF_MAJ_VER, L_SMF_MIN_VER));
 
     if(smfSigRegion == SMF_SIG)
     {
         // WAV Check
-        if(toWav().isValid())
+        if((minorVersion == MIN_VER_STD_PROTO_WAV || minorVersion == MIN_VER_STD_WAV) && toWav().isValid())
         {
             mType = WAVE;
             return true;
         }
-        else if(toMp3().isValid()) // MP3 Check
+        else if(minorVersion == MIN_VER_STD_MP3 && toMp3().isValid()) // MP3 Check
         {
             mType = MP3;
             return true;
@@ -50,15 +64,10 @@ bool Smf::fileIsValidSMF()
     return false;
 }
 
-QByteArray Smf::addSMFHeader(const QByteArray& fileData)
-{
-    return Qx::ByteArray::RAWFromString(Smf::SMF_SIG) + QByteArray(Smf::SMF_CMN_FLAGS, 8) + fileData;
-}
-
 //Public:
 bool Smf::isValid() { return !mFileDataF.isNull(); }
 Smf::Type Smf::getType() { return mType; }
 QByteArray Smf::getFullData() { return mFileDataF; }
-Wav Smf::toWav() { return Wav(mFileDataF.mid(L_SMF_SIG + L_SMF_CMN_FLAGS)); } // Uses unknown flag values that seem to be common to a huge majority of SMFs
-Mp3 Smf::toMp3() { return Mp3(mFileDataF.mid(L_SMF_SIG + L_SMF_CMN_FLAGS)); } // Uses unknown flag values that seem to be common to a huge majority of SMFs
+Wav Smf::toWav() { return Wav(mFileDataF.mid(L_SMF_SIG + L_SMF_MAJ_VER + L_SMF_MIN_VER)); }
+Mp3 Smf::toMp3() { return Mp3(mFileDataF.mid(L_SMF_SIG + L_SMF_MAJ_VER + L_SMF_MIN_VER)); }
 
